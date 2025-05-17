@@ -1,7 +1,22 @@
-@import 'node_modules/locomotive-scroll/dist/locomotive-scroll';
+/* postcss-ignore */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-body{
-  margin: 0px;
-  background-color: black;
+@font-face {
+  font-family: "Main";
+  src: url("../../public/medias/PPPangaia-Medium.ttf");
 }
 
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+body {
+  margin: 0px;
+  background-color: white;
+  color: rgb(var(--foreground-rgb));
+  font-family: "Main";
+}
