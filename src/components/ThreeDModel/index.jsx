@@ -1,3 +1,4 @@
+// component/ThreeDModel/index.jsx
 "use client";
 import { useRef, useEffect, useState, useMemo } from "react";
 import dynamic from "next/dynamic";
@@ -51,7 +52,6 @@ export default function ThreeScene() {
     []
   );
 
-  // GLTF preload sebelum visible
   useEffect(() => {
     const preloadGLTF = async () => {
       const { GLTFLoader } = await import(
@@ -103,7 +103,6 @@ export default function ThreeScene() {
         },
       });
 
-      // Transisi masuk dari fog
       masterTL.fromTo(
         "#bot-fog",
         { opacity: 0 },
@@ -111,7 +110,6 @@ export default function ThreeScene() {
         0.1
       );
 
-      // Gerak bot masuk dari atas, kabut menyebar
       masterTL.fromTo(
         "#bot-position",
         { y: -2, opacity: 0 },
@@ -119,7 +117,6 @@ export default function ThreeScene() {
         0.3
       );
 
-      // Floor text animation
       floorTexts.forEach((_, i) => {
         const ref = textRefs.current[i];
         if (!ref) return;
@@ -133,10 +130,10 @@ export default function ThreeScene() {
           {
             opacity: 1,
             y: 0,
-            scale: 1,
+            scale: 1.2,
             filter: "blur(0px)",
-            duration: 0.8,
-            ease: "power2.out",
+            duration: 1,
+            ease: "power4.out",
           },
           start
         );
@@ -148,14 +145,13 @@ export default function ThreeScene() {
             y: -100,
             scale: 0.9,
             filter: "blur(10px)",
-            duration: 0.6,
+            duration: 0.8,
             ease: "power2.inOut",
           },
           end - 0.3
         );
       });
 
-      // Ekspresi emosi bot
       masterTL.to(
         "#bot-head",
         { rotationX: -0.2, duration: 1, ease: "power2.out" },
@@ -172,7 +168,7 @@ export default function ThreeScene() {
         { opacity: 0, scale: 0.8, y: 100, filter: "blur(10px)" },
         {
           opacity: 1,
-          scale: 1,
+          scale: 1.3,
           y: 0,
           filter: "blur(0px)",
           duration: 1.2,
@@ -234,7 +230,7 @@ export default function ThreeScene() {
       </div>
 
       <div className={styles.epicTextWrapper}>
-        <div className={styles.epicText} id="epicText">
+        <div className={styles.epicText} id="epicText" aria-live="polite">
           IA MASIH PUNYA NYALA
         </div>
       </div>

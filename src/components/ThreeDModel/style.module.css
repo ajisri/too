@@ -1,11 +1,11 @@
-/* component/3d/style.module.css */
-
+/* component/ThreeDModel/style.module.css */
 .container {
   position: relative;
   width: 100%;
   height: 100vh;
   overflow: hidden;
   background: linear-gradient(to bottom, #0f0f14, #1a1c1f);
+  font-family: var(--font-jp), serif;
 }
 
 .slidesContainer {
@@ -51,7 +51,6 @@
   font-size: 1.2rem;
   line-height: 1.8rem;
   text-align: center;
-  font-family: var(--font-jp), serif;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
@@ -78,7 +77,6 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   text-shadow: 0 0 20px rgba(250, 204, 21, 0.4);
-  font-family: var(--font-jp), sans-serif;
   opacity: 0;
   will-change: opacity, transform, filter;
   text-align: center;
