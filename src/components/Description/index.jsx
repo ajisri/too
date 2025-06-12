@@ -28,17 +28,24 @@ function AnimatedText({ children }) {
     if (!text.current) return;
     gsap.registerPlugin(ScrollTrigger);
 
-    const animation = gsap.from(text.current, {
-      scrollTrigger: {
-        trigger: text.current,
-        scrub: true,
-        start: "10px bottom",
-        end: "bottom+=400px bottom",
+    gsap.fromTo(
+      text.current,
+      {
+        opacity: 0,
+        x: -1500,
       },
-      opacity: 0,
-      left: "-200px",
-      ease: "power3.Out",
-    });
+      {
+        opacity: 1,
+        x: 0,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: text.current,
+          scrub: true,
+          start: "10px bottom",
+          end: "bottom+=400px bottom",
+        },
+      }
+    );
   }, []);
 
   return <p ref={text}>{children}</p>;

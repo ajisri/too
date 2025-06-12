@@ -215,7 +215,6 @@ function FloatingIsland() {
       time: { value: 0 },
     },
     side: THREE.DoubleSide,
-    flatShading: false,
   });
 
   useFrame(({ clock }) => {

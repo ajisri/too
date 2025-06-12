@@ -14,7 +14,7 @@ const ThreeScene = dynamic(() => import("@/components/ThreeDModel"), {
 });
 
 export default function Home() {
-  const scrollY = useLenisScroll(); // Gunakan hook untuk scroll
+  // const scrollY = useLenisScroll();
 
   return (
     <main className={styles.main}>

@@ -1,10 +1,10 @@
-// component/ThreeDModel/index.jsx
 "use client";
 import { useRef, useEffect, useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import styles from "./style.module.css";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import SplitType from "split-type";
 
 const ThreeCanvas = dynamic(() => import("./ThreeCanvas"), {
   ssr: false,
@@ -17,12 +17,18 @@ export default function ThreeScene() {
   const [botReady, setBotReady] = useState(false);
   const textRefs = useRef([]);
   const lenisRef = useRef(null);
+  const titleRef = useRef(null);
+  const splitTitleRef = useRef(null);
 
   const floorTexts = useMemo(
     () => [
       {
+        id: 1001, // Unique and different id for title block, placed first (more on top)
+        title: "Bayangan yang ia tinggalkan",
+      },
+      {
         id: 1,
-        content: `<p><em>Bayangan yang Ia Tinggalkan</em></p><p>Di sebuah pagi yang tampak biasa, seseorang terbangun—namun dunia di sekitarnya tidak lagi terasa sama.</p>`,
+        content: `<p>Di sebuah pagi yang tampak biasa, seseorang terbangun—namun dunia di sekitarnya tidak lagi terasa sama.</p>`,
       },
       {
         id: 2,
@@ -88,6 +94,62 @@ export default function ThreeScene() {
       const totalParts = floorTexts.length;
       const durationPerPart = 1;
 
+      if (titleRef.current) {
+        if (splitTitleRef.current) {
+          splitTitleRef.current.revert();
+          splitTitleRef.current = null;
+        }
+        splitTitleRef.current = new SplitType(titleRef.current, {
+          types: "chars",
+        });
+      }
+
+      if (titleRef.current) {
+        if (splitTitleRef.current) {
+          splitTitleRef.current.revert();
+          splitTitleRef.current = null;
+        }
+
+        splitTitleRef.current = new SplitType(titleRef.current, {
+          types: "chars",
+        });
+
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: titleRef.current,
+            start: "top center",
+            end: "bottom top", // scroll melewati elemen
+            toggleActions: "play reverse play reverse", // reversible
+            markers: false,
+          },
+        });
+
+        tl.fromTo(
+          splitTitleRef.current.chars,
+          {
+            opacity: 0,
+            x: 100,
+          },
+          {
+            opacity: 1,
+            x: 0,
+            duration: 1,
+            ease: "power4.out",
+            stagger: 0.04,
+          }
+        ).to(
+          splitTitleRef.current.chars,
+          {
+            opacity: 0,
+            x: -100,
+            duration: 0.6,
+            ease: "power2.in",
+            stagger: 0.03,
+          },
+          "+=0.4" // setelah muncul diam sebentar lalu hilang
+        );
+      }
+
       const masterTL = gsap.timeline({
         scrollTrigger: {
           trigger: containerRef.current,
@@ -98,7 +160,10 @@ export default function ThreeScene() {
           markers: false,
           onUpdate: (self) => {
             setProgress(self.progress);
-            if (self.progress > 0.05 && !botReady) setBotReady(true);
+            // Bot appears when reaching third item (floorTexts index 2, id 2)
+            if (self.progress >= 2 / totalParts && !botReady) {
+              setBotReady(true);
+            }
           },
         },
       });
@@ -117,9 +182,15 @@ export default function ThreeScene() {
         0.3
       );
 
-      floorTexts.forEach((_, i) => {
+      floorTexts.forEach((floor, i) => {
+        if (floor.id === 1001) return; // skip title block from normal floor text animations
+
         const ref = textRefs.current[i];
         if (!ref) return;
+
+        // Sesuaikan durasi berdasarkan panjang konten
+        const contentLength = floor.content.length;
+        const baseDuration = Math.min(1, Math.max(0.5, contentLength / 150)); // Durasi dinamis
 
         const start = i * durationPerPart;
         const end = start + durationPerPart;
@@ -132,7 +203,7 @@ export default function ThreeScene() {
             y: 0,
             scale: 1.2,
             filter: "blur(0px)",
-            duration: 1,
+            duration: baseDuration * 1,
             ease: "power4.out",
           },
           start
@@ -145,7 +216,7 @@ export default function ThreeScene() {
             y: -100,
             scale: 0.9,
             filter: "blur(10px)",
-            duration: 0.8,
+            duration: baseDuration * 0.8,
             ease: "power2.inOut",
           },
           end - 0.3
@@ -192,6 +263,10 @@ export default function ThreeScene() {
     }, containerRef);
 
     return () => {
+      if (splitTitleRef.current) {
+        splitTitleRef.current.revert();
+        splitTitleRef.current = null;
+      }
       ctx.revert();
       lenisRef.current?.destroy();
     };
@@ -213,20 +288,35 @@ export default function ThreeScene() {
       <ThreeCanvas scrollY={progress} botReady={botReady} />
 
       <div className={styles.slidesContainer}>
-        {floorTexts.map((floor, i) => (
-          <section
-            key={floor.id}
-            ref={(el) => (textRefs.current[i] = el)}
-            className={`${styles.slide} ${styles.floorText}`}
-          >
-            <div className={styles.textPanel}>
-              <div
-                className={styles.textFrame}
-                dangerouslySetInnerHTML={{ __html: floor.content }}
-              />
-            </div>
-          </section>
-        ))}
+        {floorTexts.map((floor, i) => {
+          if (floor.id === 1001) {
+            return (
+              <section
+                key={floor.id}
+                className={styles.backgroundTitleWrapper}
+                aria-hidden="true"
+              >
+                <h2 ref={titleRef} className={styles.backgroundTitle}>
+                  {floor.title}
+                </h2>
+              </section>
+            );
+          }
+          return (
+            <section
+              key={floor.id}
+              ref={(el) => (textRefs.current[i] = el)}
+              className={`${styles.slide} ${styles.floorText}`}
+            >
+              <div className={styles.textPanel}>
+                <div
+                  className={styles.textFrame}
+                  dangerouslySetInnerHTML={{ __html: floor.content }}
+                />
+              </div>
+            </section>
+          );
+        })}
       </div>
 
       <div className={styles.epicTextWrapper}>

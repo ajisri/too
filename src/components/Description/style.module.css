@@ -5,8 +5,11 @@
   text-transform: uppercase;
   margin-top: 30vw;
   margin-left: 10vw;
+  background-color: yellow; /* tambah ini */
+  border: 1px solid red; /* bantu lihat batasannya */
 }
 .description p {
   margin: 0px;
   position: relative;
+  opacity: 1 !important;
 }

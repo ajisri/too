@@ -33,6 +33,51 @@
   align-items: center;
 }
 
+.titleSlide {
+  position: relative;
+  margin-bottom: 2rem;
+  padding-top: 3rem; /* push it a bit upwards relative to content below */
+}
+
+.title {
+  font-size: 4rem;
+  font-weight: 700;
+  color: #111827; /* Dark text for contrast on light background */
+  text-align: center;
+  margin: 0;
+  user-select: none;
+}
+
+.backgroundTitleWrapper {
+  position: absolute;
+  top: 20%;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.backgroundTitle {
+  font-size: 8vw;
+  font-weight: 700;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.05); /* Very faint text */
+  mix-blend-mode: overlay; /* Or try 'soft-light' / 'multiply' */
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  filter: blur(1px);
+  user-select: none;
+  line-height: 1.2;
+}
+
+
+/* Ensure slidesContainer spacing and layout fit this stacked structure nicely */
+.slidesContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
 .textPanel {
   backdrop-filter: blur(10px);
   background: rgba(15, 15, 20, 0.6);
