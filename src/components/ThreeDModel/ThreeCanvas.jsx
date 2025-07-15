@@ -553,6 +553,7 @@ export default function ThreeCanvas({ scrollY, botReady }) {
           shadow-mapSize={[2048, 2048]}
           color="#ffedd5"
         />
+
         <Environment preset="studio" />
         <Suspense fallback={null}>
           <ComicScene scrollY={scrollY} botReady={botReady} />
