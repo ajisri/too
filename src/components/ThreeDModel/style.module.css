@@ -4,8 +4,19 @@
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  background: linear-gradient(to bottom, #0f0f14, #1a1c1f);
-  font-family: var(--font-jp), serif;
+  background: linear-gradient(135deg, #0a0a0a 0%, #111111 50%, #0f0f14 100%);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+.threeCanvasWrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 15; /* Above background but below text */
+  pointer-events: none;
 }
 
 .slidesContainer {
@@ -20,90 +31,272 @@
   align-items: center;
   justify-content: center;
   gap: 4rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
 }
 
 .slide {
   position: absolute;
   top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
+  right: 5%;
+  transform: translateY(-50%);
+  width: auto;
+  max-width: 45%;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
 }
 
 .titleSlide {
   position: relative;
   margin-bottom: 2rem;
-  padding-top: 3rem; /* push it a bit upwards relative to content below */
+  padding-top: 3rem;
 }
 
 .title {
-  font-size: 4rem;
-  font-weight: 700;
-  color: #111827; /* Dark text for contrast on light background */
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 600;
+  color: #ffffff;
   text-align: center;
   margin: 0;
   user-select: none;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 
 .backgroundTitleWrapper {
   position: absolute;
-  top: 20%;
-  left: 0;
-  width: 100%;
+  top: 5%;
+  left: 5%;
+  width: auto;
+  max-width: 70%;
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.5rem;
 }
 
 .backgroundTitle {
-  font-size: 8vw;
-  font-weight: 700;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.05); /* Very faint text */
-  mix-blend-mode: overlay; /* Or try 'soft-light' / 'multiply' */
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  filter: blur(1px);
+  font-size: clamp(4rem, 10vw, 14rem);
+  font-weight: 600; /* Regular weight like GSAP */
+  text-align: left;
+  color: rgba(255, 255, 255, 0.02);
+  mix-blend-mode: overlay;
+  letter-spacing: -0.02em; /* GSAP-style spacing */
+  text-transform: none;
+  filter: blur(0.5px);
   user-select: none;
-  line-height: 1.2;
+  line-height: 1.1; /* Tighter line height */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    "Helvetica Neue", Arial, sans-serif;
+  will-change: transform, opacity;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* Background Text Elements - Enhanced */
+.backgroundTextElement {
+  position: absolute;
+  text-align: center;
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+  font-size: clamp(6rem, 18vw, 22rem);
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.04);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: -0.06em;
+  line-height: 0.75;
+  text-transform: uppercase;
+  pointer-events: none;
+  user-select: none;
+  opacity: 1;
+  z-index: 5;
+  mix-blend-mode: overlay;
+  filter: blur(0.8px);
+  will-change: transform, opacity, filter;
+  text-shadow: 0 0 40px rgba(255, 255, 255, 0.02);
+}
 
-/* Ensure slidesContainer spacing and layout fit this stacked structure nicely */
-.slidesContainer {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
+/* Di file style.module.css */
+.bot,
+.skyland {
+  transform-style: preserve-3d;
+  will-change: transform, opacity; /* Optimalkan performa animasi */
+}
+
+/* Container untuk 3D elements */
+.bot-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1;
+  transform: translate3d(
+    0,
+    0,
+    0
+  ); /* Gunakan translate3d untuk hardware acceleration */
+}
+
+/* Untuk section id 1 */
+.centerAlign {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Untuk panel teks id 1 */
+.centerPanel {
+  position: absolute;
+  top: -229px; /* Sesuaikan dengan nilai y di GSAP */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  z-index: 10;
+}
+
+.centerPanel .textFrame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.centerPanel .textFrame p {
+  text-align: center;
+  margin: 0.5rem 0;
 }
 
 .textPanel {
-  backdrop-filter: blur(10px);
-  background: rgba(15, 15, 20, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  z-index: 20; /* Text above 3D models */
+  background-color: rgba(
+    15,
+    15,
+    20,
+    0.048
+  ); /* Dark semi-transparent background */
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
   padding: 2rem;
-  border-radius: 1.5rem;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
-  max-width: 720px;
-  width: 90%;
-  transition: all 0.4s ease;
+  max-width: 600px;
+  margin: 0 auto;
   pointer-events: auto;
 }
 
+/* Enhanced text frame with GSAP-quality typography */
 .textFrame {
-  color: #e5e5e5;
-  font-size: 1.2rem;
-  line-height: 1.8rem;
-  text-align: center;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  font-size: clamp(1.5rem, 3vw, 1.9rem);
+  line-height: 1.6; /* Tighter, more GSAP-like */
+  text-align: left;
+  font-weight: 400; /* GSAP uses regular weight, not too heavy */
+  letter-spacing: -0.01em; /* Subtle negative spacing like GSAP */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    "Helvetica Neue", Arial, sans-serif;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 4px 16px rgba(0, 0, 0, 0.6),
+    0 1px 2px rgba(0, 0, 0, 0.9);
+  filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.7));
+  /* Enhanced text rendering for crisp appearance */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.textFrame p {
+  margin: 0 0 2rem 0; /* Reduced margin for tighter spacing */
+  font-size: clamp(1.5rem, 3vw, 1.9rem);
+  line-height: 1.6; /* Consistent with GSAP's tight line height */
+  color: #ffffff;
+  font-weight: 400; /* Regular weight like GSAP */
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 4px 16px rgba(0, 0, 0, 0.6),
+    0 1px 2px rgba(0, 0, 0, 0.9);
+  letter-spacing: -0.01em;
+}
+
+.textFrame p:last-child {
+  margin-bottom: 0;
+}
+
+/* HERO HIGHLIGHT TEXT - Refined to match GSAP aesthetic */
+.textFrame strong {
+  font-weight: 500; /* Medium weight, not too heavy - like GSAP */
+  color: #f5f5dc;
+  font-size: clamp(
+    3rem,
+    7vw,
+    6rem
+  ); /* Slightly smaller for better proportion */
+  line-height: 1.15; /* GSAP-like tight line height */
+  letter-spacing: -0.025em; /* GSAP's signature negative spacing */
+  display: block;
+  margin: 2.5rem 0; /* Reduced margin */
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.9), 0 8px 40px rgba(0, 0, 0, 0.7),
+    0 2px 6px rgba(0, 0, 0, 1);
+  filter: drop-shadow(0 0 40px rgba(0, 0, 0, 0.8));
+  text-transform: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    "Helvetica Neue", Arial, sans-serif;
+  /* Enhanced text rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  animation: gentleGlow 4s ease-in-out infinite alternate;
+}
+
+/* Inline strong text - refined weight */
+.textFrame p strong {
+  display: inline;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  margin: 0;
+  font-weight: 500; /* Medium weight, not bold */
+  color: #f5f5dc;
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.9), 0 6px 24px rgba(0, 0, 0, 0.7);
+  letter-spacing: -0.015em; /* Subtle negative spacing */
+  line-height: 1.4;
+}
+
+/* Special highlight class for extra emphasis */
+.textFrame .heroText {
+  font-size: clamp(4rem, 10vw, 8rem);
+  font-weight: 900;
+  color: #f5f5dc;
+  line-height: 1.05;
+  letter-spacing: -0.05em;
+  margin: 4rem 0;
+  text-transform: none;
+  animation: gentleGlow 4s ease-in-out infinite alternate;
+}
+
+/* Medium emphasis text */
+.textFrame .mediumEmphasis {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 700;
+  color: #f5f5dc;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  margin: 2.5rem 0;
+  display: block;
 }
 
 .loadingFallback {
-  color: white;
-  font-size: 1.25rem;
+  color: #ffffff;
+  font-size: 1.5rem;
   padding: 2rem;
   text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    "Helvetica Neue", Arial, sans-serif;
+  font-weight: 500;
 }
 
 .epicTextWrapper {
@@ -116,15 +309,17 @@
 }
 
 .epicText {
-  color: #facc15;
-  font-size: 6vw;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  text-shadow: 0 0 20px rgba(250, 204, 21, 0.4);
+  color: #ffffff;
+  font-size: clamp(4rem, 10vw, 10rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  text-transform: none;
+  text-shadow: 0 0 60px rgba(255, 255, 255, 0.3);
   opacity: 0;
   will-change: opacity, transform, filter;
   text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    "Helvetica Neue", Arial, sans-serif;
 }
 
 .progressBarWrapper {
@@ -134,12 +329,158 @@
   width: 100%;
   height: 6px;
   z-index: 9999;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .progressBar {
   height: 100%;
-  background: linear-gradient(to right, #ff77aa, #ffccaa);
+  background: linear-gradient(90deg, #ffffff 0%, #e5e5e5 50%, #ffffff 100%);
   width: 0%;
-  transition: width 0.1s ease-out;
+  transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* Enhanced Responsive Design */
+@media (max-width: 1024px) {
+  .slide {
+    right: 3%;
+    max-width: 55%;
+  }
+
+  .backgroundTextElement {
+    font-size: clamp(5rem, 16vw, 18rem);
+    left: -20%;
+  }
+
+  .textFrame {
+    font-size: clamp(1.375rem, 3.5vw, 1.75rem);
+    line-height: 1.65;
+  }
+
+  .textFrame p {
+    font-size: clamp(1.375rem, 3.5vw, 1.75rem);
+    line-height: 1.65;
+  }
+
+  .textFrame strong {
+    font-size: clamp(2.5rem, 6.5vw, 5rem);
+    font-weight: 500;
+  }
+
+  .textFrame p strong {
+    font-size: clamp(1.5rem, 3.75vw, 2.25rem);
+    font-weight: 500;
+  }
+
+  .textFrame .heroText {
+    font-size: clamp(3.5rem, 9vw, 7rem);
+  }
+
+  .textFrame .mediumEmphasis {
+    font-size: clamp(2rem, 5.5vw, 4rem);
+  }
+}
+
+@media (max-width: 768px) {
+  .slide {
+    right: 2%;
+    max-width: 70%;
+  }
+
+  .textFrame {
+    font-size: clamp(1.25rem, 4vw, 1.5rem);
+    line-height: 1.7;
+  }
+
+  .textFrame p {
+    font-size: clamp(1.25rem, 4vw, 1.5rem);
+    margin-bottom: 1.75rem;
+    line-height: 1.7;
+  }
+
+  .textFrame strong {
+    font-size: clamp(2rem, 6vw, 4rem);
+    margin: 2rem 0;
+    font-weight: 500;
+  }
+
+  .textFrame p strong {
+    font-size: clamp(1.375rem, 3.25vw, 1.875rem);
+    font-weight: 500;
+  }
+
+  .backgroundTextElement {
+    font-size: clamp(4rem, 14vw, 14rem);
+    left: -15%;
+  }
+
+  .backgroundTitleWrapper {
+    top: 3%;
+    left: 3%;
+    max-width: 70%;
+    gap: 1rem;
+  }
+
+  .backgroundTitle {
+    font-size: clamp(2.5rem, 10vw, 12rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .slide {
+    right: 2%;
+    max-width: 92%;
+  }
+
+  .textFrame {
+    font-size: clamp(1.125rem, 4.5vw, 1.375rem);
+  }
+
+  .textFrame p {
+    font-size: clamp(1.125rem, 4.5vw, 1.375rem);
+  }
+
+  .textFrame strong {
+    font-size: clamp(1.75rem, 5.5vw, 3rem);
+    font-weight: 500;
+  }
+
+  .textFrame p strong {
+    font-size: clamp(1.25rem, 3.5vw, 1.625rem);
+    font-weight: 500;
+  }
+
+  .backgroundTextElement {
+    font-size: clamp(3rem, 12vw, 10rem);
+    left: -10%;
+  }
+
+  .backgroundTitleWrapper {
+    top: 2%;
+    left: 2%;
+    max-width: 85%;
+  }
+
+  .backgroundTitle {
+    font-size: clamp(2rem, 8vw, 10rem);
+  }
+}
+
+/* Smooth animations */
+@media (prefers-reduced-motion: no-preference) {
+  .textFrame {
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .backgroundTextElement {
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Disable animation for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .textFrame strong,
+  .textFrame .heroText {
+    animation: none;
+  }
 }
