@@ -1,5 +1,7 @@
 import "./globals.css";
 import { Noto_Serif_JP } from "next/font/google";
+import "@fontsource/playfair-display/700.css";
+import "@fontsource/bebas-neue";
 
 const notoSerifJP = Noto_Serif_JP({
   subsets: ["latin"],

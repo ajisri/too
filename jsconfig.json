@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
-  }
+    },
+    "types": [] // ⬅️ kunci agar VSCode tidak usah cari semua types
+  },
+  "include": ["src"]
 }

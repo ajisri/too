@@ -15,7 +15,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 15; /* Above background but below text */
+  z-index: 15;
   pointer-events: none;
 }
 
@@ -81,15 +81,15 @@
 
 .backgroundTitle {
   font-size: clamp(4rem, 10vw, 14rem);
-  font-weight: 600; /* Regular weight like GSAP */
+  font-weight: 600;
   text-align: left;
   color: rgba(255, 255, 255, 0.02);
   mix-blend-mode: overlay;
-  letter-spacing: -0.02em; /* GSAP-style spacing */
+  letter-spacing: -0.02em;
   text-transform: none;
   filter: blur(0.5px);
   user-select: none;
-  line-height: 1.1; /* Tighter line height */
+  line-height: 1.1;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
     "Helvetica Neue", Arial, sans-serif;
   will-change: transform, opacity;
@@ -97,39 +97,37 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Background Text Elements - Enhanced */
 .backgroundTextElement {
   position: absolute;
   text-align: center;
-  top: 0;
-  left: 0;
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
-  font-size: clamp(6rem, 18vw, 22rem);
+  font-size: clamp(8rem, 20vw, 24rem);
   font-weight: 900;
-  color: rgba(255, 255, 255, 0.04);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
-    "Helvetica Neue", Arial, sans-serif;
-  letter-spacing: -0.06em;
-  line-height: 0.75;
+  color: rgba(255, 255, 255, 0.05);
+  font-family: "Bebas Neue", sans-serif;
+  letter-spacing: -0.02em;
+  line-height: 0.8;
   text-transform: uppercase;
   pointer-events: none;
   user-select: none;
   opacity: 1;
   z-index: 5;
   mix-blend-mode: overlay;
-  filter: blur(0.8px);
+  filter: blur(1px);
   will-change: transform, opacity, filter;
-  text-shadow: 0 0 40px rgba(255, 255, 255, 0.02);
+  text-shadow: 0 0 60px rgba(255, 255, 255, 0.1),
+    0 0 120px rgba(255, 255, 255, 0.05);
+  white-space: nowrap;
 }
 
-/* Di file style.module.css */
 .bot,
 .skyland {
   transform-style: preserve-3d;
-  will-change: transform, opacity; /* Optimalkan performa animasi */
+  will-change: transform, opacity;
 }
 
-/* Container untuk 3D elements */
 .bot-container {
   position: absolute;
   width: 100%;
@@ -138,14 +136,9 @@
   left: 0;
   pointer-events: none;
   z-index: 1;
-  transform: translate3d(
-    0,
-    0,
-    0
-  ); /* Gunakan translate3d untuk hardware acceleration */
+  transform: translate3d(0, 0, 0);
 }
 
-/* Untuk section id 1 */
 .centerAlign {
   display: flex;
   flex-direction: column;
@@ -153,10 +146,9 @@
   justify-content: center;
 }
 
-/* Untuk panel teks id 1 */
 .centerPanel {
   position: absolute;
-  top: -229px; /* Sesuaikan dengan nilai y di GSAP */
+  top: -229px;
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
@@ -176,30 +168,25 @@
 
 .textPanel {
   position: relative;
-  z-index: 20; /* Text above 3D models */
-  background-color: rgba(
-    15,
-    15,
-    20,
-    0.048
-  ); /* Dark semi-transparent background */
+  z-index: 20;
+  background-color: rgba(15, 15, 20, 0.048);
   backdrop-filter: blur(8px);
   border-radius: 8px;
   padding: 2rem;
   max-width: 600px;
   margin: 0 auto;
   pointer-events: auto;
+  will-change: transform, opacity;
 }
 
-/* Enhanced text frame with GSAP-quality typography */
 .textFrame {
   color: #ffffff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
   font-size: clamp(1.5rem, 3vw, 1.9rem);
-  line-height: 1.6; /* Tighter, more GSAP-like */
+  line-height: 1.6;
   text-align: left;
-  font-weight: 400; /* GSAP uses regular weight, not too heavy */
-  letter-spacing: -0.01em; /* Subtle negative spacing like GSAP */
+  font-weight: 400;
+  letter-spacing: -0.01em;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
     "Helvetica Neue", Arial, sans-serif;
   position: relative;
@@ -207,18 +194,17 @@
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 4px 16px rgba(0, 0, 0, 0.6),
     0 1px 2px rgba(0, 0, 0, 0.9);
   filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.7));
-  /* Enhanced text rendering for crisp appearance */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
 .textFrame p {
-  margin: 0 0 2rem 0; /* Reduced margin for tighter spacing */
+  margin: 0 0 2rem 0;
   font-size: clamp(1.5rem, 3vw, 1.9rem);
-  line-height: 1.6; /* Consistent with GSAP's tight line height */
+  line-height: 1.6;
   color: #ffffff;
-  font-weight: 400; /* Regular weight like GSAP */
+  font-weight: 400;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 4px 16px rgba(0, 0, 0, 0.6),
     0 1px 2px rgba(0, 0, 0, 0.9);
   letter-spacing: -0.01em;
@@ -228,45 +214,29 @@
   margin-bottom: 0;
 }
 
-/* HERO HIGHLIGHT TEXT - Refined to match GSAP aesthetic */
 .textFrame strong {
-  font-weight: 500; /* Medium weight, not too heavy - like GSAP */
+  font-family: 'Bebas Neue', sans-serif !important;
+  font-weight: 400;
   color: #f5f5dc;
-  font-size: clamp(
-    3rem,
-    7vw,
-    6rem
-  ); /* Slightly smaller for better proportion */
-  line-height: 1.15; /* GSAP-like tight line height */
-  letter-spacing: -0.025em; /* GSAP's signature negative spacing */
+  font-size: clamp(3rem, 7vw, 6rem);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
   display: block;
-  margin: 2.5rem 0; /* Reduced margin */
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.9), 0 8px 40px rgba(0, 0, 0, 0.7),
-    0 2px 6px rgba(0, 0, 0, 1);
+  margin: 2.5rem 0;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
   filter: drop-shadow(0 0 40px rgba(0, 0, 0, 0.8));
-  text-transform: none;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
-    "Helvetica Neue", Arial, sans-serif;
-  /* Enhanced text rendering */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  animation: gentleGlow 4s ease-in-out infinite alternate;
+  text-transform: uppercase;
 }
 
-/* Inline strong text - refined weight */
 .textFrame p strong {
+  font-family: 'Bebas Neue', sans-serif !important;
   display: inline;
   font-size: clamp(1.75rem, 4vw, 2.5rem);
   margin: 0;
-  font-weight: 500; /* Medium weight, not bold */
-  color: #f5f5dc;
-  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.9), 0 6px 24px rgba(0, 0, 0, 0.7);
-  letter-spacing: -0.015em; /* Subtle negative spacing */
-  line-height: 1.4;
+  font-weight: 400;
+  text-transform: uppercase;
 }
 
-/* Special highlight class for extra emphasis */
 .textFrame .heroText {
   font-size: clamp(4rem, 10vw, 8rem);
   font-weight: 900;
@@ -278,7 +248,6 @@
   animation: gentleGlow 4s ease-in-out infinite alternate;
 }
 
-/* Medium emphasis text */
 .textFrame .mediumEmphasis {
   font-size: clamp(2.5rem, 6vw, 4.5rem);
   font-weight: 700;
@@ -340,7 +309,6 @@
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
-/* Enhanced Responsive Design */
 @media (max-width: 1024px) {
   .slide {
     right: 3%;
@@ -466,7 +434,6 @@
   }
 }
 
-/* Smooth animations */
 @media (prefers-reduced-motion: no-preference) {
   .textFrame {
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -477,7 +444,6 @@
   }
 }
 
-/* Disable animation for users who prefer reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .textFrame strong,
   .textFrame .heroText {

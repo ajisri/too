@@ -198,7 +198,7 @@ const vertexShader = `
     vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
     m = m * m;
     return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), 
-                                  dot(p2,x2), dot(p3,x3) ) );
+                                  dot(p2,x2), dot(p3,x3) ));
     }
 
   void main() {
@@ -284,22 +284,14 @@ function ComicScene({ scrollY, botReady }) {
     config: { mass: 1, tension: 170, friction: 26 },
   }));
 
-  // Adjusted camera positions for 9 parts (8 transitions)
   const cameraPositions = [
-    // AWAKENING - Standard view
     { position: [0, 0.5, 8], target: [0, 1, 0] },
-    // AKSA - Move slightly left and lower
     { position: [-1, 0.3, 7], target: [-0.5, 0.8, 0] },
-    // TIME - Close-up from right side
     { position: [2, 0.8, 5], target: [0.5, 0.5, 0] },
-    // STUCK - Shaky close-up
     { position: [0, 0.5, 4], target: [0, 0.5, 0] },
-    // TEST - High angle looking down (split into two parts)
     { position: [0, 3, 6], target: [0, 0, 0] },
     { position: [0, 2.5, 5.5], target: [0, -0.5, 0] },
-    // REALIZE - Slightly low angle
     { position: [0, -0.5, 7], target: [0, 1, 0] },
-    // REFLECTION - Orbiting around
     {
       position: [
         3 * Math.cos(scrollY * Math.PI),
@@ -308,7 +300,6 @@ function ComicScene({ scrollY, botReady }) {
       ],
       target: [0, 1, 0],
     },
-    // HOPE - Return to standard view with slight zoom out
     { position: [0, 0.5, 9], target: [0, 1, 0] },
   ];
 
@@ -332,18 +323,15 @@ function ComicScene({ scrollY, botReady }) {
   }, []);
 
   useEffect(() => {
-    const partCount = 8; // 8 transitions between 9 parts
-    const currentPart = Math.min(
-      Math.floor(scrollY * partCount),
-      partCount - 1
-    );
+    const partCount = 8;
+    const currentPart = Math.min(Math.floor(scrollY * partCount), partCount - 1);
     const partProgress = (scrollY * partCount) % 1;
 
     switch (currentPart) {
-      case 0: // AWAKENING
+      case 0:
         setSpring({
           positionX: 0,
-          positionY: Math.sin(partProgress * Math.PI) * 0.2 - 0.75,
+          positionY: -0.2, // Adjusted for more proportional positioning
           rotationY: partProgress * Math.PI * 0.5,
           scale: THREE.MathUtils.lerp(0.8, 1, partProgress),
           opacity: THREE.MathUtils.lerp(0, 1, partProgress * 2),
@@ -351,65 +339,52 @@ function ComicScene({ scrollY, botReady }) {
         });
         break;
 
-      case 1: // AKSA
+      case 1:
         setSpring({
-          positionX: THREE.MathUtils.lerp(0, -3, partProgress),
-          positionY: THREE.MathUtils.lerp(-0.75, 0.5, partProgress),
-          scale: THREE.MathUtils.lerp(1, 1.2, partProgress),
-          rotationY: THREE.MathUtils.lerp(
-            Math.PI * 0.5,
-            Math.PI * 0.8,
-            partProgress
-          ),
+          positionX: THREE.MathUtils.lerp(0, 5, partProgress), // Changed from -5 to 5 for right movement
+          positionY: THREE.MathUtils.lerp(-0.2, 0.5, partProgress),
+          scale: THREE.MathUtils.lerp(1, 0.8, partProgress), // Gradually decrease size
+          rotationY: THREE.MathUtils.lerp(Math.PI * 0.5, Math.PI * 0.8, partProgress),
           opacity: 1,
           config: { mass: 1, tension: 120, friction: 15 },
         });
         break;
 
-      case 2: // TIME
+      case 2:
         setSpring({
-          positionX: THREE.MathUtils.lerp(-3, 0.3, partProgress),
-          positionY: THREE.MathUtils.lerp(0.5, -0.5, partProgress),
-          scale: THREE.MathUtils.lerp(1.2, 0.8, partProgress),
-          rotationY: THREE.MathUtils.lerp(Math.PI * 0.8, 0, partProgress),
-          opacity: 1,
+          positionX: THREE.MathUtils.lerp(5, 8, partProgress), // Continue moving right and getting smaller
+          positionY: THREE.MathUtils.lerp(0.5, 0.3, partProgress),
+          scale: THREE.MathUtils.lerp(0.8, 0.6, partProgress),
+          rotationY: THREE.MathUtils.lerp(Math.PI * 0.8, Math.PI, partProgress),
+          opacity: THREE.MathUtils.lerp(1, 0.8, partProgress),
           config: { mass: 1, tension: 140, friction: 15 },
         });
         break;
 
-      case 3: // STUCK
-        setSpring({
-          positionX: 0.3 + Math.sin(partProgress * Math.PI * 10) * 0.2,
-          positionY: -0.5 + Math.sin(partProgress * Math.PI * 8) * 0.1,
-          scale: THREE.MathUtils.lerp(0.8, 0, partProgress),
-          rotationY: Math.sin(partProgress * Math.PI * 5) * 0.5,
-          opacity: THREE.MathUtils.lerp(1, 0, partProgress),
-          config: { mass: 1, tension: 180, friction: 10 },
-        });
-        break;
+      // Skip case 3 which had the duplicate shadow effect
 
-      case 4: // TEST (first part)
+      case 4:
         setSpring({
           positionX: 0,
-          positionY: THREE.MathUtils.lerp(2, -0.75, partProgress * 1.5),
-          scale: THREE.MathUtils.lerp(0, 1.5, partProgress * 1.5),
+          positionY: THREE.MathUtils.lerp(2, -0.95, partProgress * 1.5),
+          scale: THREE.MathUtils.lerp(0, 1.8, partProgress * 1.5),
           rotationY: THREE.MathUtils.lerp(0, Math.PI * 2, partProgress),
           opacity: THREE.MathUtils.lerp(0, 1, partProgress * 3),
           config: { mass: 1, tension: 250, friction: 15 },
         });
         break;
 
-      case 5: // TEST (second part) to REALIZE transition
+      case 5:
         setSpring({
           positionX: 0,
-          positionY: -0.75 + Math.sin(partProgress * Math.PI * 2) * 0.1,
-          scale: 1 + Math.sin(partProgress * Math.PI * 2) * 0.1,
+          positionY: -0.95,
+          scale: THREE.MathUtils.lerp(1.8, 0.85, partProgress),
           opacity: 1,
           config: { mass: 1, tension: 170, friction: 12 },
         });
         break;
 
-      case 6: // REALIZE to REFLECTION
+      case 6:
         setSpring({
           positionX: 0,
           positionY: -0.75,
@@ -420,10 +395,10 @@ function ComicScene({ scrollY, botReady }) {
         });
         break;
 
-      case 7: // REFLECTION to HOPE
+      case 7:
         setSpring({
-          positionX: 0,
-          positionY: -0.75 + Math.sin(partProgress * Math.PI) * 0.1,
+          positionX: 2, // Slightly shifted right
+          positionY: -0.5, // Raised position
           rotationY: Math.PI + partProgress * Math.PI,
           scale: 1,
           opacity: 1.2,
@@ -447,11 +422,17 @@ function ComicScene({ scrollY, botReady }) {
     const partCount = 8;
     const rawPart = Math.floor(scrollY * partCount);
     const newPart = Math.min(rawPart, partCount - 1);
-    if (newPart !== currentPart) setCurrentPart(newPart);
 
-    // Adjusted camera selection to handle 9 parts
+    if (newPart !== currentPart) {
+      setCurrentPart(newPart);
+      // Handle background text visibility based on current part
+      if (sparklesRef.current) {
+        sparklesRef.current.visible = newPart === currentPart;
+      }
+    }
+
     let cameraIndex = newPart;
-    if (newPart >= 5) cameraIndex = newPart + 1; // Skip duplicate for TEST part
+    if (newPart >= 5) cameraIndex = newPart + 1;
 
     const targetPos = cameraPositions[cameraIndex] || cameraPositions[0];
     camera.position.lerp(new THREE.Vector3(...targetPos.position), delta * 2);
@@ -481,18 +462,14 @@ function ComicScene({ scrollY, botReady }) {
         child.material.opacity = 0.35;
       }
     });
-  });
-
-  const cloudRotation = useMemo(() => {
-    const partCount = 8;
-    const currentPart = Math.floor(scrollY * partCount);
-
-    if (currentPart >= 7) {
-      const cameraPos = cameraPositions[8].position;
-      return Math.atan2(cameraPos[0], cameraPos[2]);
+    const light = threeScene.getObjectByName("MainSpot");
+    if (light) {
+      light.position.lerp(
+        camera.position.clone().add(new THREE.Vector3(3, 5, 5)),
+        delta * 1
+      );
     }
-    return 0;
-  }, [scrollY]);
+  });
 
   return (
     <>
@@ -545,6 +522,7 @@ export default function ThreeCanvas({ scrollY, botReady }) {
         <PerspectiveCamera makeDefault fov={45} position={[0, 0.5, 8]} />
         <ambientLight intensity={0.15} color="#fcd5ce" />
         <spotLight
+          name="MainSpot"
           position={[3, 5, 5]}
           angle={0.25}
           intensity={2}

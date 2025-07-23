@@ -1,4 +1,4 @@
-//component/ThreeDModel/index.jsx
+// component/ThreeDModel/index.jsx
 "use client";
 
 import { useRef, useEffect, useState, useMemo } from "react";
@@ -101,7 +101,6 @@ export default function ThreeScene() {
       });
 
       lenisRef.current.on("scroll", ScrollTrigger.update);
-      lenisRef.current.on("scroll", () => ScrollTrigger.update());
 
       const raf = (time) => {
         lenisRef.current.raf(time);
@@ -127,8 +126,27 @@ export default function ThreeScene() {
       const windowHeight = window.innerHeight;
       const endScroll = windowHeight * totalParts;
 
-      // Enhanced title animation
-      if (titleRef.current && !splitTitleRef.current) {
+      // Create master timeline first
+      const masterTL = gsap.timeline({
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: "top top",
+          end: `+=${endScroll}`,
+          scrub: 1,
+          pin: true,
+          markers: false,
+          onUpdate: (self) => {
+            const normalizedProgress = Math.min(1, Math.max(0, self.progress));
+            setProgress(normalizedProgress);
+            if (self.progress >= 0.33 && !botReady) {
+              setBotReady(true);
+            }
+          },
+        },
+      });
+
+      // Title animation
+      if (titleRef.current && (!splitTitleRef.current || !splitTitleRef.current.chars)) {
         splitTitleRef.current = new SplitType(titleRef.current, {
           types: "chars",
         });
@@ -137,8 +155,8 @@ export default function ThreeScene() {
           scrollTrigger: {
             trigger: titleRef.current,
             start: "top center",
-            end: "bottom top",
-            toggleActions: "play reverse play reverse",
+            end: "+=400", // Reduced distance to prevent reappearing
+            toggleActions: "play none reverse none", // Changed to prevent reappearing
             markers: false,
           },
         });
@@ -149,13 +167,12 @@ export default function ThreeScene() {
             opacity: 0,
             x: 100,
             rotationY: 90,
-            transformOrigin: "center center",
           },
           {
             opacity: 1,
             x: 0,
             rotationY: 0,
-            duration: 1.2,
+            duration: 1.5,
             ease: "back.out(1.7)",
             stagger: 0.05,
           }
@@ -165,44 +182,15 @@ export default function ThreeScene() {
             opacity: 0,
             x: -100,
             rotationY: -90,
-            duration: 0.8,
+            duration: 1,
             ease: "power3.in",
             stagger: 0.03,
           },
-          "+=0.6"
+          "+=2"
         );
       }
 
-      const masterTL = gsap.timeline({
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top top",
-          end: `+=${endScroll}`,
-          scrub: 0.8,
-          pin: true,
-          markers: false,
-          onUpdate: (self) => {
-            const normalizedProgress = Math.min(1, Math.max(0, self.progress));
-            setProgress(normalizedProgress);
-            if (normalizedProgress >= 3 / totalParts && !botReady) {
-              setBotReady(true);
-            }
-          },
-          onRefresh: () => {
-            if (typeof window === "undefined") return;
-            ScrollTrigger.update();
-            if (
-              !("ontouchstart" in window) &&
-              lenisRef.current &&
-              isInitialLoad.current &&
-              progress === 0
-            ) {
-              lenisRef.current.scrollTo(0, { immediate: true });
-            }
-          },
-        },
-      });
-
+      // Floor texts animations
       floorTexts.forEach((floor, i) => {
         const textRef = textRefs.current[i];
         const backgroundTextRef = backgroundTextRefs.current[i];
@@ -210,22 +198,43 @@ export default function ThreeScene() {
 
         const contentLength = floor.content.length;
         const baseDuration = Math.min(1.2, Math.max(0.6, contentLength / 120));
-        const start = i * durationPerPart;
-        const end = start + durationPerPart;
+        const gap = 0.8;
+        const start = i * (durationPerPart + gap);
+        const end = start + (durationPerPart * 0.6);
+        const exitStart = end - 0.3;
 
-        // Enhanced text panel animations
+        // Position adjustments for specific IDs
+        let yPosition = 0;
+        let xPosition = 0;
+
+        switch (floor.id) {
+          case 1:
+            yPosition = -180;
+            break;
+          case 6:
+            yPosition = -150;
+            break;
+          case 8:
+            yPosition = -120;
+            xPosition = 120;
+            break;
+        }
+
+        // Entry animation
         masterTL.fromTo(
           textRef,
           {
             opacity: 0,
             y: 120,
+            x: xPosition,
             scale: 0.9,
             filter: "blur(15px)",
             rotationX: 15,
           },
           {
             opacity: 1,
-            y: 0,
+            y: yPosition,
+            x: xPosition,
             scale: 1,
             filter: "blur(0px)",
             rotationX: 0,
@@ -235,116 +244,37 @@ export default function ThreeScene() {
           start
         );
 
-        // Background text animations
-        if (backgroundTextRef) {
-          masterTL.fromTo(
-            backgroundTextRef,
-            {
-              opacity: 0,
-              scale: 0.8,
-              xPercent: -100, // Untuk centering
-              yPercent: -100, // Untuk centering
-              filter: "blur(20px)",
-            },
-            {
-              opacity: 0.08,
-              scale: 1,
-              filter: "blur(0px)",
-              xPercent: -100, // Untuk centering
-              yPercent: -100, // Untuk centering
-              duration: baseDuration * 1.2,
-              ease: "power2.out",
-            },
-            start - 0.2
-          );
+        // Background text animations with adjusted timing
+        masterTL.fromTo(
+          backgroundTextRef,
+          {
+            opacity: 0,
+            scale: 0.8,
+            filter: "blur(20px)",
+          },
+          {
+            opacity: 0.08,
+            scale: 1,
+            filter: "blur(0px)",
+            duration: baseDuration,
+            ease: "power2.out",
+          },
+          start
+        );
 
-          masterTL.to(
-            backgroundTextRef,
-            {
-              opacity: 0,
-              scale: 1.1,
-              filter: "blur(10px)",
-              xPercent: -100, // Untuk centering
-              yPercent: -100, // Untuk centering
-              duration: baseDuration * 0.8,
-              ease: "power2.in",
-            },
-            end - 0.4
-          );
-        }
-
-        // Animasi khusus untuk setiap bagian
-        if (floor.id === 1) {
-          // Teks muncul di atas bot
-          masterTL.to(
-            textRef,
-            {
-              x: -320,
-              y: -229,
-              duration: baseDuration,
-              ease: "power4.out",
-            },
-            start
-          );
-        } else if (floor.id === 2) {
-          // Teks muncul di samping kanan bot
-          masterTL.to(
-            textRef,
-            {
-              x: 70, // Geser teks lebih ke kanan
-              y: 0,
-              duration: baseDuration,
-              ease: "power4.out",
-            },
-            start
-          );
-        } else if (floor.id === 3) {
-          masterTL.to(
-            textRef,
-            {
-              x: -150,
-              y: 0,
-              duration: baseDuration,
-              ease: "power4.out",
-            },
-            start
-          );
-        } else if (floor.id === 4) {
-          masterTL.to(
-            textRef,
-            {
-              x: 120,
-              y: -20,
-              duration: baseDuration,
-              ease: "power4.out",
-            },
-            start
-          );
-        } else if (floor.id === 5) {
-          masterTL.to(
-            textRef,
-            {
-              x: -720,
-              y: -20,
-              duration: baseDuration,
-              ease: "power4.out",
-            },
-            start
-          );
-        }
-
+        // Exit animation
         masterTL.to(
           textRef,
           {
             opacity: 0,
-            y: -120,
+            y: yPosition - 120,
             scale: 0.9,
             filter: "blur(15px)",
             rotationX: -15,
-            duration: baseDuration * 0.9,
+            duration: baseDuration * 0.6,
             ease: "power3.in",
           },
-          end - 0.4
+          exitStart
         );
       });
 
@@ -373,7 +303,6 @@ export default function ThreeScene() {
     };
   }, [floorTexts, botReady, lenisReady]);
 
-  // In index.jsx, modify the return statement:
   return (
     <section ref={containerRef} className={styles.container}>
       <div className={styles.progressBarWrapper}>
@@ -383,12 +312,29 @@ export default function ThreeScene() {
         />
       </div>
 
-      {/* ThreeCanvas now appears before slidesContainer in DOM order */}
       <ThreeCanvas scrollY={progress} botReady={botReady} />
 
       <section className={styles.backgroundTitleWrapper}>
         <div className="header-tag">Story of Aksa</div>
-        <h2 ref={titleRef} className={`${styles.backgroundTitle} main-heading`}>
+        <h2
+          ref={titleRef}
+          className={styles.backgroundTitle}
+          style={{
+            fontFamily: "'Bebas Neue', sans-serif", // Changed font
+            fontWeight: 700,
+            fontSize: "82px",
+            lineHeight: "1.1",
+            color: "#fff",
+            textShadow: "0 0 15px rgba(0,0,0,0.7)",
+            mixBlendMode: "normal",
+            letterSpacing: "0.5px",
+            width: "100vw",
+            maxWidth: "100vw",
+            whiteSpace: "nowrap",
+            overflow: "visible",
+            textTransform: "uppercase",
+          }}
+        >
           Bayangan yang ia tinggalkan
         </h2>
       </section>
@@ -407,14 +353,22 @@ export default function ThreeScene() {
                 className={styles.backgroundTextElement}
                 style={{
                   position: "absolute",
-                  top: 100,
-                  left: 100,
+                  top: "50%",
+                  left: "50%",
                   transform: "translate(-50%, -50%)",
-                  fontSize: "20vw",
-                  fontWeight: "bold",
-                  color: "rgba(255,255,255,0.1)",
+                  fontSize: "clamp(8rem, 20vw, 24rem)",
+                  fontWeight: 900,
+                  color: "rgba(255,255,255,0.05)",
                   zIndex: 0,
                   pointerEvents: "none",
+                  textTransform: "uppercase",
+                  letterSpacing: "-0.02em",
+                  fontFamily: "'Bebas Neue', sans-serif",
+                  textShadow: "0 0 60px rgba(255,255,255,0.1)",
+                  mixBlendMode: "overlay",
+                  whiteSpace: "nowrap",
+                  willChange: "transform, opacity",
+                  filter: "blur(1px)",
                 }}
               >
                 {floor.backgroundText}
@@ -427,6 +381,15 @@ export default function ThreeScene() {
               >
                 <div
                   className={styles.textFrame}
+                  style={{
+                    fontFamily: "'Bebas Neue', sans-serif",
+                    fontWeight: 400,
+                    fontSize: "36px",
+                    lineHeight: "1.3",
+                    color: "#fff",
+                    letterSpacing: "1px",
+                    textTransform: "uppercase",
+                  }}
                   dangerouslySetInnerHTML={{ __html: floor.content }}
                 />
               </div>
