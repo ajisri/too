@@ -324,14 +324,17 @@ function ComicScene({ scrollY, botReady }) {
 
   useEffect(() => {
     const partCount = 8;
-    const currentPart = Math.min(Math.floor(scrollY * partCount), partCount - 1);
+    const currentPart = Math.min(
+      Math.floor(scrollY * partCount),
+      partCount - 1
+    );
     const partProgress = (scrollY * partCount) % 1;
 
     switch (currentPart) {
       case 0:
         setSpring({
           positionX: 0,
-          positionY: -0.2, // Adjusted for more proportional positioning
+          positionY: Math.sin(partProgress * Math.PI) * 0.2 - 0.75,
           rotationY: partProgress * Math.PI * 0.5,
           scale: THREE.MathUtils.lerp(0.8, 1, partProgress),
           opacity: THREE.MathUtils.lerp(0, 1, partProgress * 2),
@@ -341,10 +344,14 @@ function ComicScene({ scrollY, botReady }) {
 
       case 1:
         setSpring({
-          positionX: THREE.MathUtils.lerp(0, 5, partProgress), // Changed from -5 to 5 for right movement
-          positionY: THREE.MathUtils.lerp(-0.2, 0.5, partProgress),
-          scale: THREE.MathUtils.lerp(1, 0.8, partProgress), // Gradually decrease size
-          rotationY: THREE.MathUtils.lerp(Math.PI * 0.5, Math.PI * 0.8, partProgress),
+          positionX: THREE.MathUtils.lerp(0, -2, partProgress),
+          positionY: THREE.MathUtils.lerp(-0.75, 0.5, partProgress),
+          scale: THREE.MathUtils.lerp(1, 1.2, partProgress),
+          rotationY: THREE.MathUtils.lerp(
+            Math.PI * 0.5,
+            Math.PI * 0.8,
+            partProgress
+          ),
           opacity: 1,
           config: { mass: 1, tension: 120, friction: 15 },
         });
@@ -352,22 +359,31 @@ function ComicScene({ scrollY, botReady }) {
 
       case 2:
         setSpring({
-          positionX: THREE.MathUtils.lerp(5, 8, partProgress), // Continue moving right and getting smaller
-          positionY: THREE.MathUtils.lerp(0.5, 0.3, partProgress),
-          scale: THREE.MathUtils.lerp(0.8, 0.6, partProgress),
-          rotationY: THREE.MathUtils.lerp(Math.PI * 0.8, Math.PI, partProgress),
-          opacity: THREE.MathUtils.lerp(1, 0.8, partProgress),
+          positionX: THREE.MathUtils.lerp(0, 2, partProgress), // Restrict movement to the right only
+          positionY: THREE.MathUtils.lerp(0.2, -0.2, partProgress),
+          scale: 1,
+          rotationY: THREE.MathUtils.lerp(Math.PI * 0.8, 0, partProgress),
+          opacity: 1,
           config: { mass: 1, tension: 140, friction: 15 },
         });
         break;
 
-      // Skip case 3 which had the duplicate shadow effect
+      case 3:
+        setSpring({
+          positionX: 0.1 + Math.sin(partProgress * Math.PI * 5) * 0.2,
+          positionY: -0.5 + Math.sin(partProgress * Math.PI * 8) * 0.1,
+          scale: THREE.MathUtils.lerp(0.8, 0, partProgress),
+          rotationY: Math.sin(partProgress * Math.PI * 5) * 0.5,
+          opacity: THREE.MathUtils.lerp(1, 0, partProgress),
+          config: { mass: 1, tension: 180, friction: 10 },
+        });
+        break;
 
       case 4:
         setSpring({
           positionX: 0,
-          positionY: THREE.MathUtils.lerp(2, -0.95, partProgress * 1.5),
-          scale: THREE.MathUtils.lerp(0, 1.8, partProgress * 1.5),
+          positionY: THREE.MathUtils.lerp(2, -0.95, partProgress * 1.5), // Slightly lower
+          scale: THREE.MathUtils.lerp(0, 1.8, partProgress * 1.5), // Larger scale before normalizing
           rotationY: THREE.MathUtils.lerp(0, Math.PI * 2, partProgress),
           opacity: THREE.MathUtils.lerp(0, 1, partProgress * 3),
           config: { mass: 1, tension: 250, friction: 15 },
@@ -377,8 +393,8 @@ function ComicScene({ scrollY, botReady }) {
       case 5:
         setSpring({
           positionX: 0,
-          positionY: -0.95,
-          scale: THREE.MathUtils.lerp(1.8, 0.85, partProgress),
+          positionY: -0.95, // Keep lower position
+          scale: THREE.MathUtils.lerp(1.8, 0.85, partProgress), // Normalize to slightly smaller
           opacity: 1,
           config: { mass: 1, tension: 170, friction: 12 },
         });
@@ -397,8 +413,8 @@ function ComicScene({ scrollY, botReady }) {
 
       case 7:
         setSpring({
-          positionX: 2, // Slightly shifted right
-          positionY: -0.5, // Raised position
+          positionX: 0,
+          positionY: -0.75 + Math.sin(partProgress * Math.PI) * 0.1,
           rotationY: Math.PI + partProgress * Math.PI,
           scale: 1,
           opacity: 1.2,
@@ -422,14 +438,7 @@ function ComicScene({ scrollY, botReady }) {
     const partCount = 8;
     const rawPart = Math.floor(scrollY * partCount);
     const newPart = Math.min(rawPart, partCount - 1);
-
-    if (newPart !== currentPart) {
-      setCurrentPart(newPart);
-      // Handle background text visibility based on current part
-      if (sparklesRef.current) {
-        sparklesRef.current.visible = newPart === currentPart;
-      }
-    }
+    if (newPart !== currentPart) setCurrentPart(newPart);
 
     let cameraIndex = newPart;
     if (newPart >= 5) cameraIndex = newPart + 1;
