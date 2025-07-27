@@ -31,46 +31,64 @@ export default function ThreeScene() {
                 id: 1,
                 content: `<p>Di sebuah pagi yang tampak biasa, seseorang terbangun—namun dunia di sekitarnya tidak lagi terasa sama.</p>`,
                 backgroundText: "AWAKENING",
+                duration: 2.5,
+                gap: 1.5
             },
             {
                 id: 2,
                 content: `<p><strong>Namanya Aksa.</strong></p><p>Pernah, di masa silam, ia dikenal sebagai sosok yang menyala. Dalam diamnya, ada nyala tekad. Dalam langkahnya, ada arah yang selalu jelas.</p><p>Ia bukan hanya cerdas, tapi juga penuh visi. Seakan segala hal yang disentuhnya, tumbuh menjadi sesuatu yang berarti.</p>`,
                 backgroundText: "AKSA",
+                duration: 3.5,
+                gap: 1.8
             },
             {
                 id: 3,
                 content: `<p>Namun waktu… tak selalu bersahabat.</p><p>Perlahan, tanpa disadarinya, Aksa mulai berjalan tanpa arah. Bukan karena ia kehilangan tujuan, tapi karena terlalu lama membiarkan dirinya terjebak dalam kenyamanan semu.</p>`,
                 backgroundText: "TIME",
+                duration: 3.2,
+                gap: 2.0
             },
             {
                 id: 4,
                 content: `<p>Hari-harinya diisi dengan distraksi kecil yang menjelma besar. Ia menunda, menanti, lalu mengulanginya. Hari demi hari, tanpa progres. Ia tahu itu, <br><br><strong>tapi seperti lumpur, makin ia mencoba bergerak, makin dalam ia tenggelam.</strong></p>`,
                 backgroundText: "STUCK",
+                duration: 4.2,
+                gap: 2.2
             },
             {
                 id: 5,
                 content: `<p>Hingga akhirnya… datang ujian itu.</p><p>Bukan bencana besar, bukan pula kegagalan mencolok. Tapi cukup untuk menyentaknya.</p>`,
                 backgroundText: "TEST",
+                duration: 2.8,
+                gap: 1.5
             },
             {
                 id: 6,
                 content: `<p>Sebuah kesempatan besar—yang dulu akan ia taklukkan dengan mudah—kini berdiri di hadapannya, dan <br><br><strong>ia sadar: ia tidak lagi siap.</strong></p><p>Tangannya ragu, pikirannya lambat, hatinya ciut.</p>`,
                 backgroundText: "REALIZE",
+                duration: 3.5,
+                gap: 1.8
             },
             {
                 id: 7,
                 content: `<p>Saat itulah ia melihat bayangannya sendiri.</p><p>Bukan yang ada di cermin, tapi yang ada dalam ingatannya—versi dirinya yang dulu. Yang penuh bara. Yang bisa menyala kapan saja.</p><p><strong>Ia tidak ingin menjadi penonton dari hidupnya sendiri.</strong></p>`,
                 backgroundText: "REFLECTION",
+                duration: 3.8,
+                gap: 2.0
             },
             {
                 id: 8,
                 content: `<p>Perjalanan kembali dimulai. Berat. Lambat. Penuh rasa malu karena harus mengulang.</p><p>Tapi satu hal yang kini tertanam kuat di dadanya: <strong>ia masih punya nyala.</strong> Meskipun kecil, ia menyimpannya. Dan itu cukup untuk membuatnya bergerak.</p>`,
                 backgroundText: "JOURNEY",
+                duration: 3.0,
+                gap: 1.6
             },
             {
                 id: 9,
                 content: `<p>Hari ini, Aksa belum kembali menjadi dirinya yang dulu.</p><p>Tapi setiap langkahnya kini adalah <strong>pilihan sadar untuk tidak menyerah.</strong></p><p>Setiap detik, ia bertaruh pada kemungkinan bahwa dirinya masih bisa kembali menjadi sosok yang bukan hanya baik, tapi berarti.</p>`,
                 backgroundText: "HOPE",
+                duration: 3.5,
+                gap: 2.2
             },
         ],
         []
@@ -143,8 +161,13 @@ export default function ThreeScene() {
 
             const totalParts = floorTexts.length;
             const durationPerPart = 2.5;
+            const gap = 1.8;
             const windowHeight = window.innerHeight;
-            const endScroll = windowHeight * totalParts;
+
+            // Hitung endScroll agar lebih longgar sesuai durasi+gap setiap floor
+            const endScroll = floorTexts.reduce((sum, floor) => {
+                return sum + ((floor.duration || durationPerPart) + (floor.gap || gap)) * windowHeight;
+            }, 0);
 
             const masterTL = gsap.timeline({
                 scrollTrigger: {
@@ -210,11 +233,16 @@ export default function ThreeScene() {
                 const backgroundTextRef = backgroundTextRefs.current[i];
                 if (!textRef || !backgroundTextRef) return;
 
-                const contentLength = floor.content.length;
-                const baseDuration = Math.min(1.5, Math.max(0.8, contentLength / 100));
-                const gap = 1.8;
-                let start = i * (durationPerPart + gap);
-                const exitStart = start + (durationPerPart * 0.8); // Define exitStart here
+                // Hitung start berdasarkan durasi+gap semua floor sebelumnya
+                let start = 0;
+                for (let j = 0; j < i; j++) {
+                    const prev = floorTexts[j];
+                    start += (prev.duration || durationPerPart) + (prev.gap || gap);
+                }
+
+                const thisDuration = floor.duration || durationPerPart;
+                const thisGap = floor.gap || gap;
+                const exitStart = start + (thisDuration * 0.8);
 
                 // Position adjustments
                 let yPosition = 0;
@@ -223,10 +251,10 @@ export default function ThreeScene() {
                 let bgPosition = {};
 
                 if (floor.id === 1) {
-                    yPosition = -20;    // Adjusted for top positioning
-                    xPosition = -348;    // Moved to left side
+                    yPosition = -20;
+                    xPosition = -348;
                     scale = 1;
-                    bgPosition = { top: "5%", left: "5%", transform: "none" }; // Left top positioning
+                    bgPosition = { top: "5%", left: "5%", transform: "none" };
                 } else {
                     yPosition = 0;
                     xPosition = 0;
@@ -246,7 +274,7 @@ export default function ThreeScene() {
                         opacity: 0.08,
                         scale: 1,
                         filter: "blur(0px)",
-                        duration: baseDuration,
+                        duration: thisDuration,
                         ease: "power2.out",
                         ...bgPosition
                     },
@@ -271,7 +299,7 @@ export default function ThreeScene() {
                         scale: scale,
                         filter: "blur(0px)",
                         rotationX: 0,
-                        duration: baseDuration,
+                        duration: thisDuration,
                         ease: "power3.out",
                     },
                     start
@@ -286,16 +314,16 @@ export default function ThreeScene() {
                         scale: 0.9,
                         filter: "blur(15px)",
                         rotationX: -15,
-                        duration: baseDuration * 0.6,
+                        duration: thisDuration * 0.6,
                         ease: "power3.in",
                     },
-                    exitStart // Now exitStart is defined
+                    exitStart
                 );
             });
 
             if (lenisRef.current && isInitialLoad.current) {
                 lenisRef.current.scrollTo(0, { immediate: true });
-                isInitialLoad.current = false; // ✅ agar tidak mengulang ke atas lagi
+                isInitialLoad.current = false;
             }
 
 
