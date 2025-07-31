@@ -323,7 +323,7 @@ function ComicScene({ scrollY, botReady }) {
   }, []);
 
   useEffect(() => {
-    const partCount = 8;
+    const partCount = 9;
     const currentPart = Math.min(
       Math.floor(scrollY * partCount),
       partCount - 1
@@ -344,24 +344,24 @@ function ComicScene({ scrollY, botReady }) {
 
       case 1:
         setSpring({
-          positionX: THREE.MathUtils.lerp(0, -2, partProgress),
+          positionX: THREE.MathUtils.lerp(-2, -1.8, partProgress),
           positionY: THREE.MathUtils.lerp(-0.75, 0.5, partProgress),
-          scale: THREE.MathUtils.lerp(1, 1.2, partProgress),
+          scale: THREE.MathUtils.lerp(1.2, 1.4, partProgress),
           rotationY: THREE.MathUtils.lerp(
             Math.PI * 0.5,
             Math.PI * 0.8,
             partProgress
           ),
           opacity: 1,
-          config: { mass: 1, tension: 120, friction: 15 },
+          config: { mass: 1, tension: 145, friction: 15 },
         });
         break;
 
       case 2:
         setSpring({
-          positionX: THREE.MathUtils.lerp(0, 2, partProgress), // Restrict movement to the right only
+          positionX: THREE.MathUtils.lerp(-1.8, 5, partProgress), // Restrict movement to the right only
           positionY: THREE.MathUtils.lerp(0.2, -0.2, partProgress),
-          scale: 1,
+          scale: THREE.MathUtils.lerp(0.5, 0, partProgress),
           rotationY: THREE.MathUtils.lerp(Math.PI * 0.8, 0, partProgress),
           opacity: 1,
           config: { mass: 1, tension: 140, friction: 15 },
@@ -422,6 +422,17 @@ function ComicScene({ scrollY, botReady }) {
         });
         break;
 
+      case 8:
+        setSpring({
+          positionX: THREE.MathUtils.lerp(0, -2, partProgress),
+          positionY: THREE.MathUtils.lerp(0.2, -0.2, partProgress),
+          scale: THREE.MathUtils.lerp(0.8, 0, partProgress),
+          rotationY: THREE.MathUtils.lerp(Math.PI * 0.8, 0, partProgress),
+          opacity: 1,
+          config: { mass: 1, tension: 140, friction: 15 },
+        });
+        break;
+
       default:
         setSpring({
           positionX: 0,
@@ -435,7 +446,7 @@ function ComicScene({ scrollY, botReady }) {
   }, [scrollY]);
 
   useFrame((state, delta) => {
-    const partCount = 8;
+    const partCount = 9;
     const rawPart = Math.floor(scrollY * partCount);
     const newPart = Math.min(rawPart, partCount - 1);
     if (newPart !== currentPart) setCurrentPart(newPart);
@@ -493,11 +504,11 @@ function ComicScene({ scrollY, botReady }) {
         </a.group>
       </a.group>
 
-      <CloudPlane visible={true} z={-20} opacity={0.2} scale={[90, 34]} />
-      <CloudPlane visible={true} z={-15} opacity={0.15} scale={[80, 30]} />
+      <CloudPlane visible={true} z={-20} opacity={0.2} scale={[120, 60]} />
+      <CloudPlane visible={true} z={-15} opacity={0.15} scale={[100, 50]} />
 
       {currentPart <= 2 && (
-        <CloudPlane visible={true} z={1.5} opacity={0.08} scale={[35, 15]} />
+        <CloudPlane visible={true} z={1.5} opacity={0.08} scale={[45, 20]} />
       )}
 
       {currentPart > 2 && (
@@ -507,7 +518,7 @@ function ComicScene({ scrollY, botReady }) {
           scale={15}
           size={currentPart === 5 ? 2 : 1.2}
           speed={currentPart === 5 ? 0.8 : 0.3}
-          color={currentPart === 5 ? "#ffffff" : "#fde68a"}
+          color={currentPart === 5 ? "#ffffff" : "#050400"}
           noise={currentPart === 5 ? 0.2 : 0.1}
           opacity={sparklesIntensity}
         />
