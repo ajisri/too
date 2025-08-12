@@ -424,7 +424,7 @@ function ComicScene({ scrollY, botReady }) {
 
       case 7:
         setSpring({
-          positionX: 0,
+          positionX: -80,
           positionY: -0.75 + Math.sin(partProgress * Math.PI) * 0.1,
           rotationY: Math.PI + partProgress * Math.PI,
           scale: 1,

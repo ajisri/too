@@ -137,6 +137,28 @@ export default function ThreeScene() {
   useEffect(() => {
     if (!lenisReady) return;
 
+    // register plugin
+    gsap.registerPlugin(ScrollTrigger);
+
+    // --- Reset baseline for left-aligned elements & background text
+    // This prevents leftover transforms from previous GSAP runs.
+    if (containerRef.current) {
+      try {
+        const leftSelector = `.${styles.leftTopAlign}`;
+        const bgSelector = `.${styles.backgroundTextElement}`;
+        const leftEls = containerRef.current.querySelectorAll(leftSelector);
+        const bgEls = containerRef.current.querySelectorAll(bgSelector);
+
+        // Set them to a clean baseline: no transform, x=0, y=0
+        if (leftEls.length)
+          gsap.set(leftEls, { x: 0, y: 0, transform: "none" });
+        if (bgEls.length) gsap.set(bgEls, { x: 0, y: 0, transform: "none" });
+      } catch (err) {
+        // fallback: ignore if selector issues
+        // console.warn(err);
+      }
+    }
+
     const getStartTimeForIndex = (index) => {
       return floorTexts
         .slice(0, index)
@@ -204,44 +226,50 @@ export default function ThreeScene() {
         const thisDuration = floor.duration || DEFAULT_DURATION;
         const exitStart = start + thisDuration * 0.8;
 
-        const alignLeft =
-          floor.id === 1 || floor.id === 3 || floor.id === 5 || floor.id === 9;
+        // <-- MATCHING LOGIC: include id 7 here so animations use same baseline as render
+        const alignLeft = [1, 3, 5, 7, 9].includes(floor.id);
         const y = alignLeft ? -20 : 0;
+        // x offset used in animation (kept from original design)
         const x = alignLeft ? -348 : 0;
         const scale = 1;
-        const bgPosition = alignLeft
-          ? { top: "5%", left: "5%" }
-          : { top: "5%", right: "5%", left: "auto" };
 
+        // Standardize background text position to match render (px left)
+        // ganti ini
+        const bgPosition = {
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+        };
+
+        // animasi masuk
         tl.fromTo(
+          backgroundTextRef,
+          { opacity: 0, scale: 0.8, filter: "blur(20px)" },
+          {
+            opacity: 1,
+            scale: 1,
+            filter: "blur(0px)",
+            duration: thisDuration * 0.4,
+            ease: "power2.out",
+          },
+          0
+        );
+
+        tl.to(
           backgroundTextRef,
           {
             opacity: 0,
-            scale: 0.8,
+            scale: 1.2,
             filter: "blur(20px)",
-            ...bgPosition,
+            duration: thisDuration * 0.4,
+            ease: "power2.in",
           },
-          {
-            opacity: 0.08,
-            scale: 1,
-            filter: "blur(0px)",
-            duration: thisDuration,
-            ease: "power2.out",
-            ...bgPosition,
-          },
-          start
+          start + thisDuration * 0.6
         );
 
         tl.fromTo(
           textRef,
-          {
-            opacity: 0,
-            y: 120,
-            x,
-            scale,
-            filter: "blur(15px)",
-            rotationX: 15,
-          },
+          { opacity: 0, y: 120, x, scale, filter: "blur(15px)", rotationX: 15 },
           {
             opacity: 1,
             y,
@@ -272,6 +300,7 @@ export default function ThreeScene() {
     };
 
     const ctx = gsap.context(() => {
+      // title fade
       gsap.to(titleRef.current, {
         scrollTrigger: {
           trigger: containerRef.current,
@@ -310,6 +339,8 @@ export default function ThreeScene() {
         lenisRef.current.scrollTo(0, { immediate: true });
         isInitialLoad.current = false;
       }
+
+      // ensure ScrollTrigger recalculates positions
       ScrollTrigger.refresh();
     }, containerRef);
 
@@ -317,6 +348,8 @@ export default function ThreeScene() {
       splitTitleRef.current?.revert();
       splitTitleRef.current = null;
       ctx.revert();
+      // kill scroll triggers to be safe
+      ScrollTrigger.getAll().forEach((st) => st.kill && st.kill());
     };
   }, [lenisReady, botReady, floorTexts]);
 
@@ -328,6 +361,19 @@ export default function ThreeScene() {
           style={{ width: `${(progress * 100).toFixed(2)}%` }}
         />
       </div>
+
+      <div className={styles.backgroundTextFixedContainer}>
+        {floorTexts.map((floor, i) => (
+          <div
+            key={floor.id}
+            ref={(el) => (backgroundTextRefs.current[i] = el)}
+            className={styles.backgroundTextElement}
+          >
+            {floor.backgroundText}
+          </div>
+        ))}
+      </div>
+
       <div className={styles.canvasWrapper}>
         <ThreeCanvas scrollY={progress} botReady={botReady} />
       </div>
@@ -366,8 +412,9 @@ export default function ThreeScene() {
           const isId7 = floor.id === 7;
           const isId9 = floor.id === 9;
 
-          const alignLeft = isId1 || isId3 || isId5 || isId9;
-          const shiftRightTop = isId6 || isId7;
+          // MATCH rendering group — id7 included here
+          const alignLeft = isId1 || isId3 || isId5 || isId7 || isId9;
+          const shiftRightTop = isId6;
 
           return (
             <section
@@ -400,36 +447,6 @@ export default function ThreeScene() {
               }
             >
               <div
-                ref={(el) => (backgroundTextRefs.current[i] = el)}
-                className={styles.backgroundTextElement}
-                style={
-                  alignLeft
-                    ? {
-                        position: "absolute",
-                        top: "5%",
-                        left: "5%",
-                        transform: "none",
-                        textAlign: "left",
-                      }
-                    : shiftRightTop
-                    ? {
-                        position: "absolute",
-                        top: "2%",
-                        right: "5%",
-                        transform: "none",
-                        textAlign: "right",
-                      }
-                    : {
-                        top: "5%",
-                        right: "5%",
-                        left: "auto",
-                        transform: "none",
-                      }
-                }
-              >
-                {floor.backgroundText}
-              </div>
-              <div
                 ref={(el) => (textRefs.current[i] = el)}
                 className={`${styles.textPanel} ${
                   alignLeft ? styles.leftPanel : ""
@@ -456,7 +473,6 @@ export default function ThreeScene() {
                   dangerouslySetInnerHTML={{ __html: floor.content }}
                 />
 
-                {/* === Render LycagonFace if id === 5 === */}
                 {isId5 && (
                   <div style={{ marginTop: "40px" }}>
                     <LycagonFace />
