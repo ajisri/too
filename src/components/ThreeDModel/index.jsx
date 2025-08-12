@@ -7,7 +7,7 @@ import styles from "./style.module.css";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import SplitType from "split-type";
-import Animcloud from "./cloudModel";
+import LycagonFace from "./LycagonFace";
 
 const ThreeCanvas = dynamic(() => import("./ThreeCanvas"), {
   ssr: false,
@@ -328,9 +328,9 @@ export default function ThreeScene() {
           style={{ width: `${(progress * 100).toFixed(2)}%` }}
         />
       </div>
-
-      <ThreeCanvas scrollY={progress} botReady={botReady} />
-      <Animcloud />
+      <div className={styles.canvasWrapper}>
+        <ThreeCanvas scrollY={progress} botReady={botReady} />
+      </div>
 
       <section className={styles.backgroundTitleWrapper}>
         <div className="header-tag">Story of Aksa</div>
@@ -455,6 +455,13 @@ export default function ThreeScene() {
                   }}
                   dangerouslySetInnerHTML={{ __html: floor.content }}
                 />
+
+                {/* === Render LycagonFace if id === 5 === */}
+                {isId5 && (
+                  <div style={{ marginTop: "40px" }}>
+                    <LycagonFace />
+                  </div>
+                )}
               </div>
             </section>
           );

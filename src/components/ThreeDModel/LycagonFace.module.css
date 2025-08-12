@@ -1,0 +1,44 @@
+/* LycagonFace.module.css */
+.lycagonFace {
+  position: fixed; /* supaya selalu center */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: transparent;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.faceWrapper {
+  position: relative;
+  width: 900px; /* ukuran besar kepala */
+  height: 900px;
+  transform: scale(1.3) translateX(-7%);
+  transform-origin: center;
+}
+
+.baseImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.09;
+  z-index: 1;
+}
+
+.lycagonSVG {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  z-index: 2;
+  filter: drop-shadow(0 0 3px #111);
+}

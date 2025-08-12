@@ -379,14 +379,25 @@ function ComicScene({ scrollY, botReady }) {
         });
         break;
 
+      // case 4:
+      //   setSpring({
+      //     positionX: 0,
+      //     positionY: THREE.MathUtils.lerp(2, -0.95, partProgress * 1.5), // Slightly lower
+      //     scale: THREE.MathUtils.lerp(0, 1.8, partProgress * 1.5), // Larger scale before normalizing
+      //     rotationY: THREE.MathUtils.lerp(0, Math.PI * 2, partProgress),
+      //     opacity: THREE.MathUtils.lerp(0, 1, partProgress * 3),
+      //     config: { mass: 1, tension: 250, friction: 15 },
+      //   });
+      //   break;
+
       case 4:
         setSpring({
-          positionX: 0,
-          positionY: THREE.MathUtils.lerp(2, -0.95, partProgress * 1.5), // Slightly lower
-          scale: THREE.MathUtils.lerp(0, 1.8, partProgress * 1.5), // Larger scale before normalizing
-          rotationY: THREE.MathUtils.lerp(0, Math.PI * 2, partProgress),
-          opacity: THREE.MathUtils.lerp(0, 1, partProgress * 3),
-          config: { mass: 1, tension: 250, friction: 15 },
+          positionX: 0.1 + Math.sin(partProgress * Math.PI * 5) * 0.2,
+          positionY: -0.5 + Math.sin(partProgress * Math.PI * 8) * 0.1,
+          scale: THREE.MathUtils.lerp(0.8, 0, partProgress),
+          rotationY: Math.sin(partProgress * Math.PI * 5) * 0.5,
+          opacity: THREE.MathUtils.lerp(1, 0, partProgress),
+          config: { mass: 1, tension: 180, friction: 10 },
         });
         break;
 

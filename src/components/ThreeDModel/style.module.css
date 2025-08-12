@@ -15,12 +15,22 @@
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 15;
+  z-index: 9999;
   pointer-events: none;
 }
 
+.canvasWrapper {
+  position: fixed; /* biar selalu di viewport */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* biar klik & scroll tetap kena teks */
+  z-index: 9999; /* di bawah progress bar tapi di atas teks */
+}
+
 .slidesContainer {
-  position: absolute;
+  position: relative;
   top: 0;
   left: 0;
   width: 100%;
@@ -34,6 +44,7 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 2rem;
+  z-index: 1;
 }
 
 .slide {
@@ -90,7 +101,7 @@
   filter: blur(0.5px);
   user-select: none;
   line-height: 1.1;
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   will-change: transform, opacity;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -214,7 +225,7 @@
 }
 
 .textFrame strong {
-  font-family: 'Bebas Neue', sans-serif !important;
+  font-family: "Bebas Neue", sans-serif !important;
   font-weight: 400;
   color: #f5f5dc;
   font-size: clamp(3rem, 7vw, 6rem);
@@ -228,7 +239,7 @@
 }
 
 .textFrame p strong {
-  font-family: 'Bebas Neue', sans-serif !important;
+  font-family: "Bebas Neue", sans-serif !important;
   display: inline;
   font-size: clamp(1.75rem, 4vw, 2.5rem);
   margin: 0;
@@ -306,6 +317,7 @@
   width: 0%;
   transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  z-index: 10000;
 }
 
 .centerBottomAlign {
@@ -341,27 +353,27 @@
   font-size: clamp(2.2rem, 5vw, 2.8rem);
   text-align: center;
   line-height: 1.25;
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: "Bebas Neue", sans-serif;
   font-weight: 400;
   letter-spacing: 0.03em;
   text-transform: uppercase;
   color: #fff;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.8), 0 4px 16px rgba(0,0,0,0.6);
-  filter: drop-shadow(0 0 20px rgba(0,0,0,0.7));
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 4px 16px rgba(0, 0, 0, 0.6);
+  filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.7));
   margin-bottom: 0;
 }
 
 .leftTopAlign {
-    position: absolute !important;
-    left: 5% !important;
-    top: 15% !important;
-    transform: none !important;
-    right: auto !important;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    z-index: 20;
+  position: absolute !important;
+  left: 5% !important;
+  top: 15% !important;
+  transform: none !important;
+  right: auto !important;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  z-index: 20;
 }
 
 @media (max-width: 1024px) {
