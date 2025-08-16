@@ -349,7 +349,7 @@ export default function ThreeScene() {
       splitTitleRef.current = null;
       ctx.revert();
       // kill scroll triggers to be safe
-      ScrollTrigger.getAll().forEach((st) => st.kill && st.kill());
+      //ScrollTrigger.getAll().forEach((st) => st.kill && st.kill());
     };
   }, [lenisReady, botReady, floorTexts]);
 
