@@ -4,29 +4,25 @@
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  background: linear-gradient(135deg, #0a0a0a 0%, #111111 50%, #0f0f14 100%);
+  background: transparent;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
     "Helvetica Neue", Arial, sans-serif;
 }
 
 .threeCanvasWrapper {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.canvasWrapper {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 9999;
   pointer-events: none;
-}
-
-.canvasWrapper {
-  position: fixed; /* biar selalu di viewport */
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none; /* biar klik & scroll tetap kena teks */
-  z-index: 9999; /* di bawah progress bar tapi di atas teks */
+  z-index: 1; /* Place it behind everything but in front of background text if needed */
 }
 
 .slidesContainer {
@@ -44,7 +40,7 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 2rem;
-  z-index: 1;
+  z-index: 10;
 }
 
 .slide {
@@ -83,7 +79,7 @@
   width: auto;
   max-width: 70%;
   pointer-events: none;
-  z-index: 1;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -94,11 +90,11 @@
   font-size: clamp(4rem, 10vw, 14rem);
   font-weight: 400;
   text-align: left;
-  color: rgba(255, 255, 255, 0.02);
-  mix-blend-mode: overlay;
+  color: rgba(255, 255, 255, 0.9);
+  mix-blend-mode: normal;
   letter-spacing: 1px;
   text-transform: uppercase;
-  filter: blur(0.5px);
+  filter: blur(0px);
   user-select: none;
   line-height: 1.1;
   font-family: "Bebas Neue", sans-serif;
@@ -107,9 +103,19 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.backgroundTextElement {
+.backgroundTextFixedContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.backgroundTextFixedContainer .backgroundTextElement {
   position: absolute;
-  text-align: center;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -120,42 +126,12 @@
   letter-spacing: -0.02em;
   line-height: 0.8;
   text-transform: uppercase;
-  pointer-events: none;
-  user-select: none;
   opacity: 0;
-  z-index: 5;
   mix-blend-mode: overlay;
   filter: blur(1px);
   will-change: transform, opacity, filter;
   text-shadow: 0 0 60px rgba(255, 255, 255, 0.1),
     0 0 120px rgba(255, 255, 255, 0.05);
-  white-space: nowrap;
-}
-
-.backgroundTextFixedContainer {
-  position: fixed;
-  bottom: 5%;
-  left: 5%;
-  z-index: 5;
-  pointer-events: none;
-  user-select: none;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  max-width: 40vw;
-  /* agar tidak overlap teks utama */
-}
-
-.backgroundTextFixedContainer .backgroundTextElement {
-  position: static; /* supaya tidak lagi absolut */
-  font-size: clamp(3rem, 6vw, 12rem);
-  color: #fff;
-  font-family: "Bebas Neue", sans-serif;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
-  opacity: 0;
-  transition: opacity 0.6s ease;
   white-space: nowrap;
 }
 
@@ -403,15 +379,12 @@
   z-index: 20;
 }
 
+/* --- MEDIA QUERIES --- */
+
 @media (max-width: 1024px) {
   .slide {
     right: 3%;
     max-width: 55%;
-  }
-
-  .backgroundTextElement {
-    font-size: clamp(5rem, 16vw, 18rem);
-    left: -20%;
   }
 
   .textFrame {
@@ -445,52 +418,86 @@
 
 @media (max-width: 768px) {
   .slide {
-    right: 2%;
-    max-width: 70%;
+    right: 50% !important;
+    transform: translate(50%, -50%) !important;
+    width: 100%;
+    max-width: 90vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .leftTopAlign,
+  .centerBottomAlign {
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 100%;
+    max-width: 90vw;
+    text-align: center !important;
+    align-items: center !important;
+  }
+
+  .textPanel {
+    text-align: center !important;
+    padding: 1.5rem !important;
+    width: 100% !important;
+    background-color: rgba(15, 15, 20, 0.3);
   }
 
   .textFrame {
-    font-size: clamp(1.25rem, 4vw, 1.5rem);
+    font-size: clamp(1rem, 4vw, 1.25rem);
     line-height: 1.7;
+    text-align: center !important;
   }
 
   .textFrame p {
-    font-size: clamp(1.25rem, 4vw, 1.5rem);
-    margin-bottom: 1.75rem;
-    line-height: 1.7;
+    font-size: clamp(1rem, 4vw, 1.25rem);
+    margin-bottom: 1.5rem;
+    text-align: center !important;
   }
 
   .textFrame strong {
-    font-size: clamp(2rem, 6vw, 4rem);
-    margin: 2rem 0;
-    font-weight: 500;
+    font-size: clamp(1.75rem, 6vw, 3rem);
+    margin: 1.5rem 0;
+    display: block;
   }
 
   .textFrame p strong {
-    font-size: clamp(1.375rem, 3.25vw, 1.875rem);
-    font-weight: 500;
+    font-size: clamp(1.1rem, 3.5vw, 1.5rem);
   }
 
-  .backgroundTextElement {
-    font-size: clamp(4rem, 14vw, 14rem);
-    left: -15%;
+  /* Background Text Optimization for Mobile */
+  .backgroundTextFixedContainer .backgroundTextElement {
+    font-size: clamp(4rem, 15vw, 8rem) !important;
+    opacity: 0.3 !important;
+    filter: blur(2px) !important;
+    width: 100%;
   }
 
   .backgroundTitleWrapper {
-    top: 3%;
-    left: 3%;
-    max-width: 70%;
-    gap: 1rem;
+    top: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 90%;
+    align-items: center;
+    text-align: center;
   }
 
   .backgroundTitle {
-    font-size: clamp(2.5rem, 10vw, 12rem);
+    text-align: center;
+    font-size: clamp(2.5rem, 8vw, 4rem);
   }
 }
 
 @media (max-width: 480px) {
   .slide {
-    right: 2%;
+    right: 50% !important;
+    transform: translate(50%, -50%) !important;
     max-width: 92%;
   }
 
@@ -512,14 +519,12 @@
     font-weight: 500;
   }
 
-  .backgroundTextElement {
-    font-size: clamp(3rem, 12vw, 10rem);
-    left: -10%;
+  .backgroundTextFixedContainer .backgroundTextElement {
+    font-size: clamp(3rem, 12vw, 10rem) !important;
   }
 
   .backgroundTitleWrapper {
     top: 2%;
-    left: 2%;
     max-width: 85%;
   }
 
@@ -533,12 +538,13 @@
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .backgroundTextElement {
+  .backgroundTextFixedContainer .backgroundTextElement {
     transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .textFrame strong,
   .textFrame .heroText {
     animation: none;

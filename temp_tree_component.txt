@@ -1,0 +1,187 @@
+// Tree component with lush foliage and sunrise lighting
+function Tree({ currentPart, ...props }) {
+  const leavesRef = useRef();
+  const trunkRef = useRef();
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+
+  // Significantly increased leaf count for dense foliage
+  const leafCount = useMemo(() => {
+    if (isMobile) return 600;  // 4x increase
+    if (isTablet) return 1000; // 4x increase
+    return 1600; // 4x increase
+  }, [isMobile, isTablet]);
+
+  // Wood texture material with procedural noise
+  const woodMaterial = useMemo(() => {
+    const material = new THREE.MeshStandardMaterial({
+      roughness: 0.9,
+      metalness: 0.1,
+    });
+
+    material.onBeforeCompile = (shader) => {
+      shader.uniforms.time = { value: 0 };
+      material.userData.shader = shader;
+
+      shader.fragmentShader = `
+        varying vec3 vPosition;
+        varying vec3 vNormal;
+        
+        // Simple noise function
+        float hash(vec3 p) {
+          p = fract(p * 0.3183099 + 0.1);
+          p *= 17.0;
+          return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+        }
+        
+        float noise(vec3 x) {
+          vec3 i = floor(x);
+          vec3 f = fract(x);
+          f = f * f * (3.0 - 2.0 * f);
+          
+          return mix(
+            mix(mix(hash(i + vec3(0,0,0)), hash(i + vec3(1,0,0)), f.x),
+                mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y),
+            mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x),
+                mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y), f.z);
+        }
+      ` + shader.fragmentShader;
+
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <color_fragment>',
+        `
+        #include <color_fragment>
+        
+        // Wood grain pattern
+        float angle = atan(vPosition.x, vPosition.z);
+        float rings = sin(angle * 8.0 + vPosition.y * 3.0) * 0.5 + 0.5;
+        float grain = noise(vPosition * 15.0);
+        
+        // Wood colors
+        vec3 darkWood = vec3(0.25, 0.15, 0.10);
+        vec3 lightWood = vec3(0.45, 0.30, 0.20);
+        
+        vec3 woodColor = mix(darkWood, lightWood, rings * 0.6 + grain * 0.4);
+        
+        diffuseColor.rgb = woodColor;
+        `
+      );
+
+      shader.vertexShader = `
+        varying vec3 vPosition;
+        varying vec3 vNormal;
+      ` + shader.vertexShader;
+
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <begin_vertex>',
+        `
+        #include <begin_vertex>
+        vPosition = position;
+        vNormal = normal;
+        `
+      );
+    };
+
+    return material;
+  }, []);
+
+  // Generate simple leaf positions - more densely packed
+  const leafData = useMemo(() => {
+    const data = [];
+    const dummy = new THREE.Object3D();
+
+    for (let i = 0; i < leafCount; i++) {
+      // Tighter spherical distribution for dense canopy
+      const phi = Math.acos(2 * Math.random() - 1);
+      const theta = Math.random() * 2 * Math.PI;
+      const r = 0.5 + Math.random() * 0.8; // Tighter radius
+
+      const x = r * Math.sin(phi) * Math.cos(theta);
+      const y = r * Math.sin(phi) * Math.sin(theta) * 0.6; // More flattened
+      const z = r * Math.cos(phi);
+
+      dummy.position.set(x, y + 2.2, z);
+      dummy.rotation.set(
+        Math.random() * Math.PI,
+        Math.random() * Math.PI,
+        Math.random() * Math.PI
+      );
+      // Smaller individual leaves
+      const scale = 0.08 + Math.random() * 0.08;
+      dummy.scale.set(scale, scale, scale);
+      dummy.updateMatrix();
+      data.push(dummy.matrix.clone());
+    }
+
+    return data;
+  }, [leafCount]);
+
+  useLayoutEffect(() => {
+    if (leavesRef.current) {
+      leafData.forEach((matrix, i) => {
+        leavesRef.current.setMatrixAt(i, matrix);
+      });
+      leavesRef.current.instanceMatrix.needsUpdate = true;
+    }
+  }, [leafData]);
+
+  useFrame(({ clock }) => {
+    if (leavesRef.current) {
+      // Gentle swaying animation
+      const time = clock.elapsedTime;
+      leavesRef.current.rotation.y = Math.sin(time * 0.3) * 0.05;
+    }
+  });
+
+  // Only show tree in part 0 (AWAKENING)
+  if (currentPart !== 0) return null;
+
+  return (
+    <group {...props}>
+      {/* Tree Trunk - with natural wood texture */}
+      <mesh ref={trunkRef} position={[0, 1.0, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.15, 0.22, 2.0, 16]} />
+        <primitive object={woodMaterial} attach="material" />
+      </mesh>
+
+      {/* Dense Foliage - simple sphere leaves */}
+      <instancedMesh
+        ref={leavesRef}
+        args={[null, null, leafData.length]}
+        castShadow
+        receiveShadow
+      >
+        <sphereGeometry args={[1, 4, 4]} />
+        <meshStandardMaterial
+          color="#2d5016"
+          roughness={0.7}
+          metalness={0.1}
+        />
+      </instancedMesh>
+
+      {/* Sunrise directional light - warm orange glow */}
+      <directionalLight
+        position={[5, 3, 2]}
+        intensity={1.5}
+        color="#ff9966"
+        castShadow
+        shadow-mapSize={[1024, 1024]}
+      />
+
+      {/* Ambient sunrise glow */}
+      <pointLight
+        position={[3, 2, 1]}
+        intensity={0.8}
+        color="#ffaa77"
+        distance={8}
+        decay={2}
+      />
+
+      {/* Shadow catcher under tree */}
+      <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <circleGeometry args={[1.5, 32]} />
+        <shadowMaterial opacity={0.3} />
+      </mesh>
+    </group>
+  );
+}

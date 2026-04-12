@@ -1,10 +1,12 @@
 {
   "compilerOptions": {
+    "target": "esnext",
+    "lib": ["esnext", "dom", "dom.iterable"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": [] // ⬅️ kunci agar VSCode tidak usah cari semua types
+    "types": []
   },
   "include": ["src"]
 }

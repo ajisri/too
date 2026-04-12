@@ -19,12 +19,15 @@ const DEFAULT_DURATION = 2.5;
 const DEFAULT_GAP = 1.8;
 const SCROLL_SCRUB = 1.5;
 const EXIT_DURATION_RATIO = 0.6;
+const INITIAL_DELAY = 1.5; // Delay agar layar hitam lebih lama sebelum Awakening muncul
 
 export default function ThreeScene() {
   const containerRef = useRef(null);
   const [progress, setProgress] = useState(0);
   const [botReady, setBotReady] = useState(false);
   const [lenisReady, setLenisReady] = useState(false);
+  const [activeFloorId, setActiveFloorId] = useState(null);
+  const [isActive, setIsActive] = useState(false);
   const textRefs = useRef([]);
   const backgroundTextRefs = useRef([]);
   const lenisRef = useRef(null);
@@ -36,7 +39,7 @@ export default function ThreeScene() {
     () => [
       {
         id: 1,
-        content: `<p>Di sebuah pagi yang tampak biasa, seseorang terbangun—namun dunia di sekitarnya tidak lagi terasa sama.</p>`,
+        content: `<p>Di sebuah pagi yang tampak biasa,<br>seseorang terbangun—namun dunia di sekitarnya<br>tidak lagi terasa sama.</p>`,
         backgroundText: "AWAKENING",
         duration: 2.5,
         gap: 1.5,
@@ -107,7 +110,7 @@ export default function ThreeScene() {
         "three/examples/jsm/loaders/GLTFLoader"
       );
       const loader = new GLTFLoader();
-      loader.load("/models/bot.glb", () => {});
+      loader.load("/models/bot.glb", () => { });
     };
     preloadGLTF();
   }, []);
@@ -115,12 +118,12 @@ export default function ThreeScene() {
   useEffect(() => {
     const initLenis = async () => {
       const Lenis = (await import("@studio-freight/lenis")).default;
+      const isMobile = window.innerWidth <= 768;
       lenisRef.current = new Lenis({
-        lerp: 0.08,
+        lerp: isMobile ? 0.08 : 0.05,
         smoothWheel: true,
         syncTouch: true,
-        smooth: true,
-        touchMultiplier: 2,
+        touchMultiplier: isMobile ? 1.2 : 1.5,
       });
       lenisRef.current.on("scroll", ScrollTrigger.update);
       const raf = (time) => {
@@ -160,7 +163,7 @@ export default function ThreeScene() {
     }
 
     const getStartTimeForIndex = (index) => {
-      return floorTexts
+      return INITIAL_DELAY + floorTexts
         .slice(0, index)
         .reduce(
           (sum, f) =>
@@ -175,7 +178,7 @@ export default function ThreeScene() {
         (sum, floor) =>
           sum +
           ((floor.duration || DEFAULT_DURATION) + (floor.gap || DEFAULT_GAP)) *
-            windowHeight,
+          windowHeight,
         0
       );
     };
@@ -224,7 +227,6 @@ export default function ThreeScene() {
         if (!textRef || !backgroundTextRef) return;
         const start = getStartTimeForIndex(i);
         const thisDuration = floor.duration || DEFAULT_DURATION;
-        const exitStart = start + thisDuration * 0.8;
 
         // <-- MATCHING LOGIC: include id 7 here so animations use same baseline as render
         const alignLeft = [1, 3, 5, 7, 9].includes(floor.id);
@@ -241,35 +243,54 @@ export default function ThreeScene() {
           transform: "translate(-50%, -50%)",
         };
 
-        // animasi masuk
+        // NEW SEQUENCE: BG In -> BG Out -> GAP -> Content In
+        const bgInDuration = thisDuration * 0.25;
+        const bgStayDuration = thisDuration * 0.15;
+        const bgOutDuration = thisDuration * 0.25;
+        const gapDuration = thisDuration * 0.05; // Small gap to ensure BG is fully gone
+        const contentInDuration = thisDuration * 0.30;
+
+        // 1. Background Text In
         tl.fromTo(
           backgroundTextRef,
-          { opacity: 0, scale: 0.8, filter: "blur(20px)" },
+          { opacity: 0, scale: 0.95, filter: "blur(8px)" },
           {
             opacity: 1,
             scale: 1,
             filter: "blur(0px)",
-            duration: thisDuration * 0.4,
+            duration: bgInDuration,
             ease: "power2.out",
           },
-          0
+          start
         );
 
+        // 2. Background Text Out
         tl.to(
           backgroundTextRef,
           {
             opacity: 0,
-            scale: 1.2,
-            filter: "blur(20px)",
-            duration: thisDuration * 0.4,
+            scale: 1.05,
+            filter: "blur(8px)",
+            duration: bgOutDuration,
             ease: "power2.in",
           },
-          start + thisDuration * 0.6
+          start + bgInDuration + bgStayDuration
         );
+
+        // 3. Content In (After BG Out + Gap)
+        const contentStart = start + bgInDuration + bgStayDuration + bgOutDuration + gapDuration;
 
         tl.fromTo(
           textRef,
-          { opacity: 0, y: 120, x, scale, filter: "blur(15px)", rotationX: 15 },
+          { 
+            opacity: 0, 
+            y: 50, 
+            x: x - 20, 
+            scale: 0.98, 
+            filter: "blur(10px)", 
+            rotationX: 15,
+            skewX: -5 
+          },
           {
             opacity: 1,
             y,
@@ -277,44 +298,67 @@ export default function ThreeScene() {
             scale,
             filter: "blur(0px)",
             rotationX: 0,
-            duration: thisDuration,
-            ease: "power3.out",
+            skewX: 0,
+            duration: contentInDuration,
+            ease: "back.out(1.4)",
+            onStart: () => {
+              setActiveFloorId(floor.id);
+            },
+            onReverseComplete: () => {
+              setActiveFloorId(null);
+            },
           },
-          start
+          contentStart
         );
 
+        // Content Exit (End of section)
         tl.to(
           textRef,
           {
             opacity: 0,
-            y: y - 80,
-            scale: 0.9,
-            filter: "blur(15px)",
-            rotationX: -15,
-            duration: thisDuration * EXIT_DURATION_RATIO,
+            y: y - 50,
+            scale: 0.95,
+            filter: "blur(5px)",
+            rotationX: -10,
+            duration: thisDuration * 0.2, // Quick exit at the end
             ease: "power3.in",
+            onComplete: () => {
+              // Clear active floor when content exits (except for floor 7 which continues to floor 8)
+              if (floor.id !== 7) {
+                setActiveFloorId(null);
+              }
+            },
+            onReverseComplete: () => {
+              // Restore active floor when scrolling back down into content
+              setActiveFloorId(floor.id);
+            },
           },
-          exitStart
+          start + thisDuration - (thisDuration * 0.2)
         );
       });
     };
 
     const ctx = gsap.context(() => {
-      // title fade
+      // Background color trigger for transition to black
+      ScrollTrigger.create({
+        trigger: containerRef.current,
+        start: "top center",
+        onEnter: () => {
+          gsap.to("#main-bg", { backgroundColor: "#000000", duration: 1 });
+        },
+      });
+
+      // Title fade - complete before AWAKENING appears
       gsap.to(titleRef.current, {
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top top",
-          end: "25% top",
+          end: "10% top",
           scrub: true,
-          toggleActions: "play none none reverse",
-          once: true,
         },
         opacity: 0,
-        y: -50,
-        duration: 1,
-        ease: "power2.inOut",
-        onComplete: () => gsap.set(titleRef.current, { display: "none" }),
+        y: -100,
+        ease: "power2.in",
       });
 
       const masterTL = gsap.timeline({
@@ -324,6 +368,7 @@ export default function ThreeScene() {
           end: `+=${calculateEndScroll()}`,
           scrub: SCROLL_SCRUB,
           pin: true,
+          onToggle: (self) => setIsActive(self.isActive),
           onUpdate: (self) => {
             const p = Math.min(1, Math.max(0, self.progress));
             setProgress(p);
@@ -340,29 +385,26 @@ export default function ThreeScene() {
         isInitialLoad.current = false;
       }
 
-      // ensure ScrollTrigger recalculates positions
       ScrollTrigger.refresh();
     }, containerRef);
 
-    return () => {
-      splitTitleRef.current?.revert();
-      splitTitleRef.current = null;
-      ctx.revert();
-      // kill scroll triggers to be safe
-      //ScrollTrigger.getAll().forEach((st) => st.kill && st.kill());
-    };
+    return () => ctx.revert();
   }, [lenisReady, botReady, floorTexts]);
 
   return (
-    <section ref={containerRef} className={styles.container}>
-      <div className={styles.progressBarWrapper}>
+    <section 
+      ref={containerRef} 
+      className={styles.container}
+      style={{ backgroundColor: "black" }} // Force full black for this section
+    >
+      <div className={styles.progressBarWrapper} style={{ display: isActive ? "block" : "none" }}>
         <div
           className={styles.progressBar}
           style={{ width: `${(progress * 100).toFixed(2)}%` }}
         />
       </div>
 
-      <div className={styles.backgroundTextFixedContainer}>
+      <div className={styles.backgroundTextFixedContainer} style={{ opacity: isActive ? 1 : 0, visibility: isActive ? "visible" : "hidden" }}>
         {floorTexts.map((floor, i) => (
           <div
             key={floor.id}
@@ -374,11 +416,11 @@ export default function ThreeScene() {
         ))}
       </div>
 
-      <div className={styles.canvasWrapper}>
+      <div className={styles.canvasWrapper} style={{ opacity: isActive ? 1 : 0, visibility: isActive ? "visible" : "hidden" }}>
         <ThreeCanvas scrollY={progress} botReady={botReady} />
       </div>
 
-      <section className={styles.backgroundTitleWrapper}>
+      <section className={styles.backgroundTitleWrapper} style={{ opacity: progress > 0.1 ? 0 : 1 }}>
         <div className="header-tag">Story of Aksa</div>
         <h2
           ref={titleRef}
@@ -419,22 +461,21 @@ export default function ThreeScene() {
           return (
             <section
               key={floor.id}
-              className={`${styles.slide} ${styles.floorText} ${
-                alignLeft ? styles.leftTopAlign : ""
-              } ${shiftRightTop ? styles.rightTopAlign : ""}`}
+              className={`${styles.slide} ${styles.floorText} ${alignLeft ? styles.leftTopAlign : ""
+                } ${shiftRightTop ? styles.rightTopAlign : ""}`}
               style={
                 alignLeft
                   ? {
-                      position: "absolute",
-                      left: "80px",
-                      top: "15%",
-                      transform: "none",
-                      width: "100%",
-                      maxWidth: "90vw",
-                      textAlign: "left",
-                    }
+                    position: "absolute",
+                    left: "80px",
+                    top: "15%",
+                    transform: "none",
+                    width: "100%",
+                    maxWidth: "90vw",
+                    textAlign: "left",
+                  }
                   : shiftRightTop
-                  ? {
+                    ? {
                       position: "absolute",
                       right: "100px",
                       top: "10%",
@@ -443,20 +484,19 @@ export default function ThreeScene() {
                       maxWidth: "90vw",
                       textAlign: "right",
                     }
-                  : {}
+                    : {}
               }
             >
               <div
                 ref={(el) => (textRefs.current[i] = el)}
-                className={`${styles.textPanel} ${
-                  alignLeft ? styles.leftPanel : ""
-                } ${shiftRightTop ? styles.rightPanel : ""}`}
+                className={`${styles.textPanel} ${alignLeft ? styles.leftPanel : ""
+                  } ${shiftRightTop ? styles.rightPanel : ""}`}
                 style={
                   alignLeft
                     ? { textAlign: "left", padding: "0", width: "100%" }
                     : shiftRightTop
-                    ? { textAlign: "right", padding: "0", width: "100%" }
-                    : {}
+                      ? { textAlign: "right", padding: "0", width: "100%" }
+                      : {}
                 }
               >
                 <div

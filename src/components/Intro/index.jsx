@@ -40,6 +40,18 @@ export default function Index() {
     if (typeof window === "undefined") return;
     gsap.registerPlugin(ScrollTrigger);
 
+    // Set initial background color for Intro
+    ScrollTrigger.create({
+      trigger: background.current,
+      start: "top top",
+      onEnter: () => {
+        gsap.to("#main-bg", { backgroundColor: "#ffffff", duration: 0.5 });
+      },
+      onEnterBack: () => {
+        gsap.to("#main-bg", { backgroundColor: "#ffffff", duration: 0.5 });
+      },
+    });
+
     const timeline = gsap.timeline({
       scrollTrigger: {
         trigger: document.documentElement,
