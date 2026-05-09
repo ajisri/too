@@ -1,9 +1,8 @@
-import React, { useState, useLayoutEffect, useRef, useEffect } from "react";
+import React, { useState, useLayoutEffect, useRef } from "react";
 import styles from "./style.module.css";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Lenis from "@studio-freight/lenis";
 
 const projects = [
   {
@@ -31,53 +30,44 @@ export default function Index() {
   const imageContainer = useRef(null);
   const textContainer = useRef(null);
 
-  // Smooth scroll dengan Lenis
-  useEffect(() => {
-    const lenis = new Lenis({
-      lerp: 0.1,
-      smoothWheel: true,
-    });
-
-    const raf = (time) => {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
-    };
-    requestAnimationFrame(raf);
-
-    return () => lenis.destroy();
-  }, []);
+  // Lenis REMOVED — now handled by SmoothScrollProvider (single instance)
 
   useLayoutEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
-    // Animasi untuk pinning dan parallax
-    ScrollTrigger.create({
-      trigger: imageContainer.current,
-      pin: true,
-      start: "top-=100px",
-      end: "+=1000",
-      scrub: 0.5,
-    });
+    // Use gsap.context for scoped cleanup instead of ScrollTrigger.killAll()
+    const ctx = gsap.context(() => {
+      // Animasi untuk pinning dan parallax
+      ScrollTrigger.create({
+        trigger: imageContainer.current,
+        pin: true,
+        start: "top-=100px",
+        end: "+=1000",
+        scrub: 0.5,
+      });
 
-    // Animasi teks fade in
-    const columns = textContainer.current.querySelectorAll(`.${styles.column}`);
-    columns.forEach((col) => {
-      gsap.fromTo(
-        col,
-        { opacity: 0, y: 50 },
-        {
-          opacity: 1,
-          y: 0,
-          scrollTrigger: {
-            trigger: col,
-            start: "top 85%",
-            toggleActions: "play none none none",
-          },
-        }
-      );
-    });
+      // Animasi teks fade in
+      const columns = textContainer.current.querySelectorAll(`.${styles.column}`);
+      columns.forEach((col) => {
+        gsap.fromTo(
+          col,
+          { opacity: 0, y: 50 },
+          {
+            opacity: 1,
+            y: 0,
+            scrollTrigger: {
+              trigger: col,
+              start: "top 85%",
+              toggleActions: "play none none none",
+            },
+          }
+        );
+      });
+    }, container);
 
-    return () => ScrollTrigger.killAll();
+    // ✅ ctx.revert() only kills THIS component's ScrollTriggers
+    // ❌ Previously: ScrollTrigger.killAll() killed ALL triggers including ThreeDModel's!
+    return () => ctx.revert();
   }, []);
 
   return (

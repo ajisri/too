@@ -1,45 +1,415 @@
-.homeHeader {
+/* ═══════════════════════════════════════════════════════════════════════
+   Intro/style.module.css
+   "Bayangan yang Ia Tinggalkan" — Hero Section
+
+   SYSTEM: Swiss Style × Brutalism
+   ─────────────────────────────────────────────────────────────────────
+   SWISS STYLE
+     → Strict typographic grid. Every element sits on a baseline.
+     → Size ratio: 8px base unit × modular scale
+     → No decorative type — weight IS meaning
+     → Ruled lines = grid exposure, not ornament
+
+   BRUTALISM
+     → Oversized. Uncomfortable. Honest.
+     → No gradients on text. No glow. No shadow prettiness.
+     → Color: near-monochrome. One accent only (paper-warm).
+     → Copy must be terse. No metaphors in structural elements.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── Design Tokens (local) ──────────────────────────────────────────── */
+/* Inherit from globals.css root, add local overrides                      */
+
+.hero {
+  /* Spacing unit: 8px */
+  --u: 8px;
+  /* Type scale (modular, ratio ~1.414) */
+  --ts-xs:   0.65rem;    /* 10.4px */
+  --ts-sm:   0.75rem;    /* 12px   */
+  --ts-base: 1rem;       /* 16px   */
+  --ts-lg:   1.25rem;    /* 20px   */
+  --ts-xl:   2rem;       /* 32px   */
+  --ts-2xl:  3.5rem;     /* 56px   */
+  --ts-3xl:  clamp(5rem, 11vw, 10rem); /* 80–160px */
+  /* Color */
+  --ink:     #f0ebe3;    /* paper white — primary text */
+  --ink-dim: rgba(240, 235, 227, 0.42); /* subdued text */
+  --ink-faint: rgba(240, 235, 227, 0.18); /* barely visible */
+  --rule:    rgba(240, 235, 227, 0.22); /* grid rules */
+}
+
+/* ─── Section Root ───────────────────────────────────────────────────── */
+
+.hero {
   position: relative;
   width: 100%;
   height: 100vh;
+  min-height: 620px;
+  overflow: hidden;
+  background: #080808;
   display: flex;
-  justify-content: center;
+  align-items: center;
 }
 
-.backgroundImage {
-  width: 100%;
-  height: 140vh;
+/* ─── Background ─────────────────────────────────────────────────────── */
+
+.bg {
   position: absolute;
-  filter: brightness(60%);
+  inset: -15% 0 -15% 0;
+  will-change: transform;
+  z-index: 0;
 }
 
-.backgroundImage img {
+.bgImage {
   object-fit: cover;
+  object-position: center 40%;
+  filter: brightness(0.28) saturate(0.5) contrast(1.1);
 }
 
-.intro {
-  display: flex;
-  justify-content: center;
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  /* Not gradient — flat dark. Brutalism: no prettification. */
+  background: #0a0a0a;
+  pointer-events: none;
+}
+
+/* ─── Main Grid ──────────────────────────────────────────────────────── */
+
+.inner {
   position: relative;
-  margin-top: 35vh;
+  z-index: 2;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 clamp(2rem, 6vw, 7rem);
+  display: grid;
+  grid-template-columns: 1fr 0.85fr;
+  align-items: center;
+  gap: clamp(3rem, 5vw, 6rem);
 }
 
-.intro h1 {
-  color: white;
-  font-size: 7vw;
+/* ─── Left Column ────────────────────────────────────────────────────── */
+
+.leftCol {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 3); /* 24px */
+}
+
+/* ─── [01] Category Marker ───────────────────────────────────────────── */
+/* Swiss: structural index. Brutalism: cold label, no warmth.             */
+
+.marker {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1.5);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.markerIndex {
+  font-family: "Courier New", "Courier", monospace; /* monospace = rawness */
+  font-size: var(--ts-xs);
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  color: var(--ink-dim);
+  line-height: 1;
+}
+
+.markerDivider {
+  font-family: "Courier New", monospace;
+  font-size: var(--ts-xs);
+  color: var(--ink-faint);
+  line-height: 1;
+}
+
+.markerLabel {
+  font-family: var(--font-narrative, "Noto Serif JP", serif);
+  font-size: var(--ts-xs);
+  font-weight: 400;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  line-height: 1;
+}
+
+/* ─── [02 + 03] Title Block ──────────────────────────────────────────── */
+
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Swiss grid rules — structural, not decorative */
+.ruleTop,
+.ruleBot {
+  height: 1px;
+  background: var(--rule);
+  width: 100%;
+  will-change: transform;
+}
+
+.ruleTop {
+  margin-bottom: calc(var(--u) * 1.5);
+}
+
+.ruleBot {
+  margin-top: calc(var(--u) * 1.5);
+}
+
+/* ─── [02] Display Title — Brutalist weight ──────────────────────────── */
+/* BEBAS NEUE: compressed, tall, authoritative. Swiss proportion.          */
+
+.titleA {
+  font-family: "Bebas Neue", var(--font-display, "Playfair Display"), sans-serif;
+  font-size: var(--ts-3xl);
+  font-weight: 400; /* Bebas Neue is inherently bold */
+  line-height: 0.92;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  margin: 0;
+  will-change: transform, opacity;
+  opacity: 0;
+
+  /* No text-shadow. Brutalism: raw type on dark field. */
+}
+
+/* ─── [03] Subtitle — lowercase serif, humanist contrast ─────────────── */
+/* Tension: massive uppercase above, delicate italic below.                */
+/* This contrast IS the design.                                            */
+
+.titleB {
+  font-family: var(--font-display, "Playfair Display"), serif;
+  font-size: clamp(1.1rem, 2.8vw, 2.4rem);
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0.01em;
+  color: rgba(240, 235, 227, 0.62);
+  margin: 0;
+  line-height: 1.2;
+  will-change: transform, opacity;
+  opacity: 0;
+}
+
+/* ─── [04] Data Strip ────────────────────────────────────────────────── */
+/* Cold, factual. No prose. Structure as content.                          */
+
+.dataStrip {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1.5);
+  flex-wrap: wrap;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.dataStrip span {
+  font-family: "Courier New", monospace;
+  font-size: var(--ts-xs);
+  letter-spacing: 0.12em;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.dataStrip strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.dataSep {
+  color: var(--ink-faint) !important;
+  font-size: 0.55rem !important;
+  letter-spacing: 0 !important;
+}
+
+/* ─── [05] Opening Line ──────────────────────────────────────────────── */
+/* Verbatim from the story. Not a summary. Not a teaser.                   */
+/* Reader encounters the actual prose — Swiss honesty principle.            */
+
+.opening {
+  font-family: var(--font-narrative, "Noto Serif JP", serif);
+  font-size: clamp(0.85rem, 1.6vw, 1.05rem);
+  line-height: 1.9;
+  color: rgba(240, 235, 227, 0.52);
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0.01em;
+  margin: 0;
+  max-width: 34ch;
+  opacity: 0;
+  will-change: transform, opacity;
+
+  /* Left border — Swiss annotation rule */
+  padding-left: calc(var(--u) * 2);
+  border-left: 1px solid var(--rule);
+}
+
+/* ─── Right Column — Image Panel ─────────────────────────────────────── */
+
+.panel {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  max-height: 78vh;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* Swiss corner frame — 1px border, angled via transform */
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border: 1px solid var(--rule);
+  transform: rotate(1.2deg);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.panelInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.panelImage {
+  object-fit: cover;
+  object-position: center 35%;
+  /* Desaturate — narrative mood, not tourism */
+  filter: brightness(0.75) saturate(0.65) contrast(1.08);
+  /* Bottom fade into black */
+  mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 65%,
+    rgba(0,0,0,0.2) 88%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 65%,
+    rgba(0,0,0,0.2) 88%,
+    transparent 100%
+  );
+}
+
+/* Swiss annotation: corner label */
+.panelLabel {
+  position: absolute;
+  bottom: calc(var(--u) * -2.5);
+  right: 0;
+  font-family: "Courier New", monospace;
+  font-size: var(--ts-xs);
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  z-index: 2;
+  line-height: 1;
+}
+
+/* ─── [06] Scroll Coordinate ─────────────────────────────────────────── */
+/* Swiss: coordinates, not instructions. Reader knows what to do.          */
+
+.scrollCue {
+  position: absolute;
+  bottom: calc(var(--u) * 4);
+  left: clamp(2rem, 6vw, 7rem);
   z-index: 3;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+  opacity: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+.scrollCoord {
+  font-family: "Courier New", monospace;
+  font-size: var(--ts-xs);
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+  line-height: 1;
   white-space: nowrap;
 }
 
-.introImage {
-  filter: brightness(70%);
-  width: 350px;
-  height: 475px;
-  position: absolute;
+.scrollTrack {
+  width: 64px;
+  height: 1px;
+  background: var(--ink-faint);
+  position: relative;
+  overflow: hidden;
 }
 
-.introImage img {
-  object-fit: cover;
-  object-position: top;
+.scrollRunner {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 40%;
+  height: 1px;
+  background: rgba(240, 235, 227, 0.7);
+  animation: runnerSlide 2.2s ease-in-out infinite;
+}
+
+@keyframes runnerSlide {
+  0%   { left: -40%; }
+  100% { left: 110%; }
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .inner {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    align-items: flex-start;
+    padding-top: 15vh;
+    gap: 2.5rem;
+  }
+
+  .panel {
+    width: 75%;
+    margin: 0 auto;
+    aspect-ratio: 4 / 3;
+    max-height: 42vh;
+  }
+
+  .titleA {
+    font-size: clamp(4rem, 16vw, 7rem);
+  }
+
+  .titleB {
+    font-size: clamp(1rem, 4.5vw, 1.8rem);
+  }
+
+  .opening {
+    max-width: 44ch;
+  }
+}
+
+@media (max-width: 480px) {
+  .inner {
+    padding-top: 18vh;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    gap: 2rem;
+  }
+
+  .panel {
+    display: none; /* Too cramped — drop the image */
+  }
+
+  .titleA {
+    font-size: clamp(3.5rem, 18vw, 6rem);
+  }
+
+  .opening {
+    display: none;
+  }
 }

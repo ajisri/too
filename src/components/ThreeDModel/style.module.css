@@ -1,13 +1,35 @@
 /* component/ThreeDModel/style.module.css */
+/* ═══════════════════════════════════════════════════════════════════════
+   NARRATIVE TYPOGRAPHY SYSTEM — "Bayangan yang Ia Tinggalkan"
+   
+   Design Philosophy:
+   Literary serif-first typography to immerse the reader in Aksa's world.
+   Every element serves the narrative weight — heavy, dramatic, human.
+   
+   Font Stack:
+   - Body narrative: Noto Serif JP → system serif fallback
+   - Emphasis/titles: Playfair Display → fallback serif
+   - Background text: Bebas Neue → impact display
+   - Strong callouts: Playfair Display italic for lyrical weight
+   
+   Color System:
+   - Primary text: #f0ebe3 (warm parchment white — not clinical)
+   - Emphasis: #e8d5b5 (aged gold — warmth of memory)
+   - Background: Deep blacks with grain texture overlay
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── Container ──────────────────────────────────────────────────────── */
+
 .container {
   position: relative;
   width: 100%;
   height: 100vh;
   overflow: hidden;
   background: transparent;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
-    "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--narrative-font);
 }
+
+/* ─── Canvas Wrappers ────────────────────────────────────────────────── */
 
 .threeCanvasWrapper {
   width: 100%;
@@ -22,8 +44,10 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 1; /* Place it behind everything but in front of background text if needed */
+  z-index: 1;
 }
+
+/* ─── Slides Container ───────────────────────────────────────────────── */
 
 .slidesContainer {
   position: relative;
@@ -43,13 +67,15 @@
   z-index: 10;
 }
 
+/* ─── Slide (Floor Text Container) ───────────────────────────────────── */
+
 .slide {
   position: absolute;
   top: 50%;
   right: 5%;
   transform: translateY(-50%);
   width: auto;
-  max-width: 45%;
+  max-width: 48%;
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -72,36 +98,233 @@
   line-height: 1.1;
 }
 
-.backgroundTitleWrapper {
-  position: absolute;
-  top: 5%;
-  left: 5%;
-  width: auto;
-  max-width: 70%;
-  pointer-events: none;
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1.5rem;
+/* ─── Text Panel — Immersive Glassmorphic Frame ──────────────────────── */
+/* 
+   The panel is the "window" into the story room.
+   It uses a multi-layered shadow system + subtle grain to feel
+   like a physical surface floating in cinematic darkness.
+*/
+
+.textPanel {
+  position: relative;
+  z-index: 20;
+  
+  /* Glassmorphic depth — dark glass with subtle warm tint */
+  background: linear-gradient(
+    168deg,
+    rgba(12, 10, 8, 0.55) 0%,
+    rgba(18, 16, 12, 0.42) 40%,
+    rgba(8, 6, 5, 0.50) 100%
+  );
+  backdrop-filter: blur(20px) saturate(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+  
+  /* Refined border — thin warm stroke for definition */
+  border: 1px solid rgba(200, 180, 140, 0.08);
+  border-radius: 4px;
+  
+  /* Generous padding for breathing room — text needs space to land */
+  padding: 2.8rem 3rem;
+  max-width: 620px;
+  margin: 0 auto;
+  pointer-events: auto;
+  will-change: transform, opacity;
+  
+  /* Depth shadow system — creates floating-in-darkness illusion */
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    0 24px 48px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-.backgroundTitle {
-  font-size: clamp(4rem, 10vw, 14rem);
-  font-weight: 400;
+/* Grain texture overlay for tactile, filmic quality */
+.textPanel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+  pointer-events: none;
+  z-index: 0;
+  mix-blend-mode: overlay;
+}
+
+/* ─── Text Frame — Core Narrative Typography ─────────────────────────── */
+/*
+   This is where the reader lives.
+   Serif body, generous line height, warm-white on deep black.
+   Every property serves readability + emotional weight.
+*/
+
+.textFrame {
+  /* Literary serif — warm, human, weighty */
+  font-family: var(--narrative-font);
+  color: var(--text-primary);
+  
+  /* Size: large enough to command attention, not so large it feels shouty */
+  font-size: clamp(1.15rem, 2.2vw, 1.45rem);
+  
+  /* Generous line height — lets words breathe like verse */
+  line-height: 1.85;
+  
+  /* Optical alignment */
   text-align: left;
-  color: rgba(255, 255, 255, 0.9);
-  mix-blend-mode: normal;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  filter: blur(0px);
-  user-select: none;
-  line-height: 1.1;
-  font-family: "Bebas Neue", sans-serif;
-  will-change: transform, opacity;
+  font-weight: 400;
+  
+  /* Subtle letter spacing for serif readability on screen */
+  letter-spacing: 0.015em;
+  
+  /* Word spacing for natural reading rhythm */
+  word-spacing: 0.05em;
+  
+  position: relative;
+  z-index: 1;
+  
+  /* Deep layered text shadow — ensures legibility over any 3D background */
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 2px 6px rgba(0, 0, 0, 0.7),
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(0, 0, 0, 0.3);
+  
+  /* Crisp rendering for serif fonts */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  
+  /* Balanced text wrapping — prevents orphaned words */
+  text-wrap: pretty;
 }
+
+/* ─── Paragraph Spacing ──────────────────────────────────────────────── */
+
+.textFrame p {
+  font-family: var(--narrative-font);
+  margin: 0 0 var(--rhythm-lg) 0;
+  font-size: clamp(1.15rem, 2.2vw, 1.45rem);
+  line-height: 1.85;
+  color: var(--text-primary);
+  font-weight: 400;
+  letter-spacing: 0.015em;
+  word-spacing: 0.05em;
+
+  /* Same deep shadow system */
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 2px 6px rgba(0, 0, 0, 0.7),
+    0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.textFrame p:last-child {
+  margin-bottom: 0;
+}
+
+/* ─── First Paragraph — Drop Cap Treatment ───────────────────────────── */
+/* Creates a literary opening for each floor's first paragraph */
+
+.textFrame p:first-child::first-letter {
+  font-family: var(--narrative-display);
+  font-size: 3.2em;
+  float: left;
+  line-height: 0.85;
+  padding-right: 0.12em;
+  padding-top: 0.05em;
+  color: var(--text-emphasis);
+  font-weight: 700;
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.8),
+    0 0 30px rgba(232, 213, 181, 0.15);
+}
+
+/* ─── Strong Text — Dramatic Display Treatment ───────────────────────── */
+/*
+   <strong> is used for the narrative's emotional peaks.
+   These are the lines that should hit hardest.
+   Uses Playfair Display at display scale with warm gold color.
+*/
+
+.textFrame strong {
+  font-family: var(--narrative-display) !important;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--text-strong);
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  display: block;
+  margin: var(--rhythm-lg) 0;
+  
+  /* Warm ambient glow — the "nyala" in text form */
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.9),
+    0 4px 16px rgba(0, 0, 0, 0.6),
+    0 0 40px rgba(232, 213, 181, 0.08);
+  
+  text-transform: none;
+}
+
+/* Inline strong within paragraphs — smaller, integrated */
+.textFrame p strong {
+  font-family: var(--narrative-display) !important;
+  display: inline;
+  font-size: clamp(1.25rem, 2.8vw, 1.7rem);
+  margin: 0;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: 0em;
+  line-height: inherit;
+}
+
+/* ─── Hero Text (Large Display Lines) ────────────────────────────────── */
+
+.textFrame .heroText {
+  font-family: var(--narrative-display);
+  font-size: clamp(3rem, 8vw, 5.5rem);
+  font-weight: 700;
+  color: var(--text-emphasis);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  margin: var(--rhythm-xl) 0;
+  text-transform: none;
+}
+
+.textFrame .mediumEmphasis {
+  font-family: var(--narrative-display);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 700;
+  color: var(--text-emphasis);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: var(--rhythm-lg) 0;
+  display: block;
+}
+
+/* ─── Loading Fallback ───────────────────────────────────────────────── */
+
+.loadingFallback {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  padding: 2rem;
+  text-align: center;
+  font-family: var(--narrative-font);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   BACKGROUND TEXT — Monumental Display Layer
+   
+   These are the one-word chapter markers (AWAKENING, AKSA, etc.)
+   They should feel carved into the void — massive, ghostly, architectural.
+   Uses outlined stroke + overlay blend for depth without competing
+   with the narrative body text.
+   ═══════════════════════════════════════════════════════════════════════ */
 
 .backgroundTextFixedContainer {
   position: fixed;
@@ -119,37 +342,114 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: clamp(8rem, 20vw, 24rem);
+  
+  /* Massive scale — fills the viewport like architecture */
+  font-size: clamp(8rem, 22vw, 28rem);
   font-weight: 900;
-  color: rgb(255, 255, 255);
-  font-family: "Bebas Neue", sans-serif;
-  letter-spacing: -0.02em;
+  font-family: var(--narrative-accent);
+  
+  /* Outlined text — carved into void, not painted on */
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.12);
+  
+  letter-spacing: 0.06em;
   line-height: 0.8;
   text-transform: uppercase;
   opacity: 0;
+  
+  /* Overlay blend keeps it behind narrative text visually */
   mix-blend-mode: overlay;
-  filter: blur(1px);
+  
   will-change: transform, opacity, filter;
-  text-shadow: 0 0 60px rgba(255, 255, 255, 0.1),
-    0 0 120px rgba(255, 255, 255, 0.05);
+  
+  /* Subtle glow halo — ethereal, not harsh */
+  text-shadow:
+    0 0 80px rgba(255, 255, 255, 0.04),
+    0 0 160px rgba(255, 255, 255, 0.02);
+  
   white-space: nowrap;
+  filter: blur(0.5px);
 }
 
-.bot,
-.skyland {
-  transform-style: preserve-3d;
-  will-change: transform, opacity;
-}
+/* ─── Epic Text (Full-screen Transition Text) ────────────────────────── */
 
-.bot-container {
+.epicTextWrapper {
   position: absolute;
-  width: 100%;
-  height: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.epicText {
+  font-family: var(--narrative-display);
+  color: var(--text-primary);
+  font-size: clamp(4rem, 10vw, 10rem);
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: -0.03em;
+  text-transform: none;
+  text-shadow: 0 0 60px rgba(255, 255, 255, 0.2);
+  opacity: 0;
+  will-change: opacity, transform, filter;
+  text-align: center;
+}
+
+/* ─── Progress Bar ───────────────────────────────────────────────────── */
+
+.progressBarWrapper {
+  position: fixed;
   top: 0;
   left: 0;
-  pointer-events: none;
-  z-index: 1;
-  transform: translate3d(0, 0, 0);
+  width: 100%;
+  height: 3px;
+  z-index: 9999;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.progressBar {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(232, 213, 181, 0.6) 0%,
+    rgba(240, 235, 227, 0.8) 50%,
+    rgba(232, 213, 181, 0.6) 100%
+  );
+  width: 0%;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 0 8px rgba(232, 213, 181, 0.3),
+    0 0 20px rgba(232, 213, 181, 0.1);
+  z-index: 10000;
+}
+
+/* ─── Alignment Classes ──────────────────────────────────────────────── */
+
+.leftTopAlign {
+  position: absolute !important;
+  left: 5% !important;
+  top: 15% !important;
+  transform: none !important;
+  right: auto !important;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  z-index: 20;
+}
+
+.rightTopAlign {
+  position: absolute !important;
+  right: 5% !important;
+  top: 10% !important;
+  left: auto !important;
+  transform: none !important;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  z-index: 20;
 }
 
 .centerAlign {
@@ -177,150 +477,6 @@
 .centerPanel .textFrame p {
   text-align: center;
   margin: 0.5rem 0;
-}
-
-.textPanel {
-  position: relative;
-  z-index: 20;
-  background-color: rgba(15, 15, 20, 0.048);
-  backdrop-filter: blur(8px);
-  border-radius: 8px;
-  padding: 2rem;
-  max-width: 600px;
-  margin: 0 auto;
-  pointer-events: auto;
-  will-change: transform, opacity;
-}
-
-.textFrame {
-  color: #ffffff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-  font-size: clamp(1.5rem, 3vw, 1.9rem);
-  line-height: 1.6;
-  text-align: left;
-  font-weight: 400;
-  letter-spacing: -0.01em;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
-    "Helvetica Neue", Arial, sans-serif;
-  position: relative;
-  z-index: 1;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 4px 16px rgba(0, 0, 0, 0.6),
-    0 1px 2px rgba(0, 0, 0, 0.9);
-  filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.7));
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-}
-
-.textFrame p {
-  margin: 0 0 2rem 0;
-  font-size: clamp(1.5rem, 3vw, 1.9rem);
-  line-height: 1.6;
-  color: #ffffff;
-  font-weight: 400;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 4px 16px rgba(0, 0, 0, 0.6),
-    0 1px 2px rgba(0, 0, 0, 0.9);
-  letter-spacing: -0.01em;
-}
-
-.textFrame p:last-child {
-  margin-bottom: 0;
-}
-
-.textFrame strong {
-  font-family: "Bebas Neue", sans-serif !important;
-  font-weight: 400;
-  color: #f5f5dc;
-  font-size: clamp(3rem, 7vw, 6rem);
-  line-height: 1.15;
-  letter-spacing: -0.025em;
-  display: block;
-  margin: 2.5rem 0;
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
-  filter: drop-shadow(0 0 40px rgba(0, 0, 0, 0.8));
-  text-transform: uppercase;
-}
-
-.textFrame p strong {
-  font-family: "Bebas Neue", sans-serif !important;
-  display: inline;
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
-  margin: 0;
-  font-weight: 400;
-  text-transform: uppercase;
-}
-
-.textFrame .heroText {
-  font-size: clamp(4rem, 10vw, 8rem);
-  font-weight: 900;
-  color: #f5f5dc;
-  line-height: 1.05;
-  letter-spacing: -0.05em;
-  margin: 4rem 0;
-  text-transform: none;
-  animation: gentleGlow 4s ease-in-out infinite alternate;
-}
-
-.textFrame .mediumEmphasis {
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
-  font-weight: 700;
-  color: #f5f5dc;
-  line-height: 1.2;
-  letter-spacing: -0.03em;
-  margin: 2.5rem 0;
-  display: block;
-}
-
-.loadingFallback {
-  color: #ffffff;
-  font-size: 1.5rem;
-  padding: 2rem;
-  text-align: center;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
-    "Helvetica Neue", Arial, sans-serif;
-  font-weight: 500;
-}
-
-.epicTextWrapper {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  z-index: 10;
-}
-
-.epicText {
-  color: #ffffff;
-  font-size: clamp(4rem, 10vw, 10rem);
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  text-transform: none;
-  text-shadow: 0 0 60px rgba(255, 255, 255, 0.3);
-  opacity: 0;
-  will-change: opacity, transform, filter;
-  text-align: center;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
-    "Helvetica Neue", Arial, sans-serif;
-}
-
-.progressBarWrapper {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 6px;
-  z-index: 9999;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.progressBar {
-  height: 100%;
-  background: linear-gradient(90deg, #ffffff 0%, #e5e5e5 50%, #ffffff 100%);
-  width: 0%;
-  transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-  z-index: 10000;
 }
 
 .centerBottomAlign {
@@ -353,33 +509,95 @@
 }
 
 .centerBottomPanel .textFrame {
-  font-size: clamp(2.2rem, 5vw, 2.8rem);
+  font-family: var(--narrative-display);
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
   text-align: center;
-  line-height: 1.25;
-  font-family: "Bebas Neue", sans-serif;
-  font-weight: 400;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: #fff;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 4px 16px rgba(0, 0, 0, 0.6);
-  filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.7));
+  line-height: 1.35;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--text-emphasis);
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.8),
+    0 4px 16px rgba(0, 0, 0, 0.6);
   margin-bottom: 0;
 }
 
-.leftTopAlign {
-  position: absolute !important;
-  left: 5% !important;
-  top: 15% !important;
-  transform: none !important;
-  right: auto !important;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  z-index: 20;
+/* ─── Left/Right Panel Modifiers ─────────────────────────────────────── */
+
+.leftPanel {
+  /* Left-aligned panels get a left border accent */
 }
 
-/* --- MEDIA QUERIES --- */
+.leftPanel::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10%;
+  bottom: 10%;
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(232, 213, 181, 0.15) 20%,
+    rgba(232, 213, 181, 0.25) 50%,
+    rgba(232, 213, 181, 0.15) 80%,
+    transparent 100%
+  );
+  border-radius: 1px;
+}
+
+.rightPanel {
+  /* Right-aligned panels get a right border accent */
+}
+
+.rightPanel::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 10%;
+  bottom: 10%;
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(232, 213, 181, 0.15) 20%,
+    rgba(232, 213, 181, 0.25) 50%,
+    rgba(232, 213, 181, 0.15) 80%,
+    transparent 100%
+  );
+  border-radius: 1px;
+}
+
+/* ─── 3D Bot/Skyland ─────────────────────────────────────────────────── */
+
+.bot,
+.skyland {
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+}
+
+.bot-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+   
+   Strategy: Maintain narrative weight at every viewport.
+   On smaller screens, text moves to center and panels expand.
+   Line heights and sizes adjust to preserve the reading experience.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── Tablet (≤1024px) ───────────────────────────────────────────────── */
 
 @media (max-width: 1024px) {
   .slide {
@@ -387,41 +605,45 @@
     max-width: 55%;
   }
 
+  .textPanel {
+    padding: 2.2rem 2.5rem;
+  }
+
   .textFrame {
-    font-size: clamp(1.375rem, 3.5vw, 1.75rem);
-    line-height: 1.65;
+    font-size: clamp(1.05rem, 2.8vw, 1.3rem);
+    line-height: 1.8;
   }
 
   .textFrame p {
-    font-size: clamp(1.375rem, 3.5vw, 1.75rem);
-    line-height: 1.65;
+    font-size: clamp(1.05rem, 2.8vw, 1.3rem);
+    line-height: 1.8;
   }
 
   .textFrame strong {
-    font-size: clamp(2.5rem, 6.5vw, 5rem);
-    font-weight: 500;
+    font-size: clamp(1.4rem, 3.2vw, 2rem);
   }
 
   .textFrame p strong {
-    font-size: clamp(1.5rem, 3.75vw, 2.25rem);
-    font-weight: 500;
+    font-size: clamp(1.15rem, 2.5vw, 1.5rem);
   }
 
   .textFrame .heroText {
-    font-size: clamp(3.5rem, 9vw, 7rem);
+    font-size: clamp(2.5rem, 7vw, 5rem);
   }
 
   .textFrame .mediumEmphasis {
-    font-size: clamp(2rem, 5.5vw, 4rem);
+    font-size: clamp(1.8rem, 4.5vw, 3rem);
   }
 }
+
+/* ─── Mobile (≤768px) ────────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
   .slide {
     right: 50% !important;
     transform: translate(50%, -50%) !important;
     width: 100%;
-    max-width: 90vw;
+    max-width: 92vw;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -436,102 +658,119 @@
     right: auto !important;
     bottom: auto !important;
     width: 100%;
-    max-width: 90vw;
+    max-width: 92vw;
     text-align: center !important;
     align-items: center !important;
   }
 
   .textPanel {
     text-align: center !important;
-    padding: 1.5rem !important;
+    padding: 2rem 1.5rem !important;
     width: 100% !important;
-    background-color: rgba(15, 15, 20, 0.3);
+    background: linear-gradient(
+      168deg,
+      rgba(12, 10, 8, 0.65) 0%,
+      rgba(18, 16, 12, 0.55) 40%,
+      rgba(8, 6, 5, 0.60) 100%
+    );
+    border-radius: 6px;
+  }
+
+  /* Hide decorative side borders on mobile */
+  .leftPanel::after,
+  .rightPanel::after {
+    display: none;
   }
 
   .textFrame {
-    font-size: clamp(1rem, 4vw, 1.25rem);
-    line-height: 1.7;
+    font-size: clamp(0.95rem, 4vw, 1.15rem);
+    line-height: 1.85;
     text-align: center !important;
+    letter-spacing: 0.02em;
   }
 
   .textFrame p {
-    font-size: clamp(1rem, 4vw, 1.25rem);
-    margin-bottom: 1.5rem;
+    font-size: clamp(0.95rem, 4vw, 1.15rem);
+    margin-bottom: var(--rhythm-md);
     text-align: center !important;
   }
 
+  .textFrame p:first-child::first-letter {
+    /* Smaller drop cap on mobile */
+    font-size: 2.4em;
+    padding-right: 0.08em;
+  }
+
   .textFrame strong {
-    font-size: clamp(1.75rem, 6vw, 3rem);
-    margin: 1.5rem 0;
+    font-size: clamp(1.2rem, 5vw, 1.8rem);
+    margin: var(--rhythm-md) 0;
     display: block;
   }
 
   .textFrame p strong {
-    font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+    font-size: clamp(1rem, 3.5vw, 1.3rem);
   }
 
-  /* Background Text Optimization for Mobile */
+  /* Background Text — reduce to avoid overwhelming small screens */
   .backgroundTextFixedContainer .backgroundTextElement {
-    font-size: clamp(4rem, 15vw, 8rem) !important;
-    opacity: 0.3 !important;
-    filter: blur(2px) !important;
-    width: 100%;
+    font-size: clamp(4rem, 16vw, 10rem) !important;
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.08) !important;
   }
 
-  .backgroundTitleWrapper {
-    top: 5%;
-    left: 50%;
-    transform: translateX(-50%);
+  .rightTopAlign {
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    right: auto !important;
+    transform: translate(-50%, -50%) !important;
     width: 100%;
-    max-width: 90%;
-    align-items: center;
-    text-align: center;
-  }
-
-  .backgroundTitle {
-    text-align: center;
-    font-size: clamp(2.5rem, 8vw, 4rem);
+    max-width: 92vw;
+    text-align: center !important;
+    align-items: center !important;
   }
 }
+
+/* ─── Small Mobile (≤480px) ──────────────────────────────────────────── */
 
 @media (max-width: 480px) {
   .slide {
     right: 50% !important;
     transform: translate(50%, -50%) !important;
-    max-width: 92%;
+    max-width: 94%;
+  }
+
+  .textPanel {
+    padding: 1.5rem 1.2rem !important;
   }
 
   .textFrame {
-    font-size: clamp(1.125rem, 4.5vw, 1.375rem);
+    font-size: clamp(0.9rem, 4.5vw, 1.1rem);
+    line-height: 1.8;
   }
 
   .textFrame p {
-    font-size: clamp(1.125rem, 4.5vw, 1.375rem);
+    font-size: clamp(0.9rem, 4.5vw, 1.1rem);
   }
 
   .textFrame strong {
-    font-size: clamp(1.75rem, 5.5vw, 3rem);
-    font-weight: 500;
+    font-size: clamp(1.1rem, 5vw, 1.6rem);
   }
 
   .textFrame p strong {
-    font-size: clamp(1.25rem, 3.5vw, 1.625rem);
-    font-weight: 500;
+    font-size: clamp(0.95rem, 3.8vw, 1.2rem);
   }
 
   .backgroundTextFixedContainer .backgroundTextElement {
-    font-size: clamp(3rem, 12vw, 10rem) !important;
+    font-size: clamp(3rem, 14vw, 8rem) !important;
+    -webkit-text-stroke: 0.8px rgba(255, 255, 255, 0.06) !important;
   }
 
-  .backgroundTitleWrapper {
-    top: 2%;
-    max-width: 85%;
-  }
-
-  .backgroundTitle {
-    font-size: clamp(2rem, 8vw, 10rem);
+  .rightTopAlign {
+    max-width: 94%;
   }
 }
+
+/* ─── Motion Preferences ─────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: no-preference) {
   .textFrame {
@@ -544,7 +783,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   .textFrame strong,
   .textFrame .heroText {
     animation: none;

@@ -6,360 +6,298 @@ import dynamic from "next/dynamic";
 import styles from "./style.module.css";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import SplitType from "split-type";
 import LycagonFace from "./LycagonFace";
+import { useLenis } from "../SmoothScrollProvider";
 
 const ThreeCanvas = dynamic(() => import("./ThreeCanvas"), {
   ssr: false,
   loading: () => <div className={styles.loadingFallback}>Loading 3D...</div>,
 });
 
+// ─── Constants ───────────────────────────────────────────────────────
 const SCROLL_THRESHOLD = 0.33;
 const DEFAULT_DURATION = 2.5;
 const DEFAULT_GAP = 1.8;
 const SCROLL_SCRUB = 1.5;
-const EXIT_DURATION_RATIO = 0.6;
-const INITIAL_DELAY = 1.5; // Delay agar layar hitam lebih lama sebelum Awakening muncul
+const INITIAL_DELAY = 0.5; // Minimal delay — straight into the experience
+
+// ─── Floor Text Data ─────────────────────────────────────────────────
+// Each floor maps to a narrative beat with unique animation config.
+
+const FLOOR_TEXTS = [
+  {
+    id: 1,
+    content: `<p>Di sebuah pagi yang tampak biasa, seseorang terbangun\u2014namun dunia di sekitarnya tidak lagi terasa sama.</p>`,
+    backgroundText: "AWAKENING",
+    duration: 2.5,
+    gap: 1.5,
+  },
+  {
+    id: 2,
+    content: `<p><strong>Namanya Aksa.</strong></p><p>Pernah, di masa silam, ia dikenal sebagai sosok yang menyala. Dalam diamnya, ada nyala tekad. Dalam langkahnya, ada arah yang selalu jelas.</p><p>Ia bukan hanya cerdas, tapi juga penuh visi. Seakan segala hal yang disentuhnya, tumbuh menjadi sesuatu yang berarti.</p>`,
+    backgroundText: "AKSA",
+    duration: 3.5,
+    gap: 1.8,
+  },
+  {
+    id: 3,
+    content: `<p>Namun waktu\u2026 tak selalu bersahabat.</p><p>Perlahan, tanpa disadarinya, Aksa mulai berjalan tanpa arah. Bukan karena ia kehilangan tujuan, tapi karena terlalu lama membiarkan dirinya terjebak dalam kenyamanan semu.</p>`,
+    backgroundText: "TIME",
+    duration: 3.2,
+    gap: 2.0,
+  },
+  {
+    id: 4,
+    content: `<p>Hari-harinya diisi dengan distraksi kecil yang menjelma besar. Ia menunda, menanti, lalu mengulanginya. Hari demi hari, tanpa progres.</p><p>Ia tahu itu\u2014</p><p><strong>tapi seperti lumpur, makin ia mencoba bergerak, makin dalam ia tenggelam.</strong></p>`,
+    backgroundText: "STUCK",
+    duration: 4.2,
+    gap: 2.2,
+  },
+  {
+    id: 5,
+    content: `<p>Hingga akhirnya\u2026 datang ujian itu.</p><p>Bukan bencana besar, bukan pula kegagalan mencolok. Tapi cukup untuk menyentaknya.</p>`,
+    backgroundText: "TEST",
+    duration: 2.8,
+    gap: 1.5,
+  },
+  {
+    id: 6,
+    content: `<p>Sebuah kesempatan besar\u2014yang dulu akan ia taklukkan dengan mudah\u2014kini berdiri di hadapannya, dan</p><p><strong>ia sadar: ia tidak lagi siap.</strong></p><p>Tangannya ragu, pikirannya lambat, hatinya ciut.</p>`,
+    backgroundText: "REALIZE",
+    duration: 3.5,
+    gap: 1.8,
+  },
+  {
+    id: 7,
+    content: `<p>Saat itulah ia melihat bayangannya sendiri.</p><p>Bukan yang ada di cermin, tapi yang ada dalam ingatannya\u2014versi dirinya yang dulu. Yang penuh bara. Yang bisa menyala kapan saja.</p><p><strong>Ia tidak ingin menjadi penonton dari hidupnya sendiri.</strong></p>`,
+    backgroundText: "REFLECTION",
+    duration: 3.8,
+    gap: 2.0,
+  },
+  {
+    id: 8,
+    content: `<p>Perjalanan kembali dimulai. Berat. Lambat. Penuh rasa malu karena harus mengulang.</p><p>Tapi satu hal yang kini tertanam kuat di dadanya: <strong>ia masih punya nyala.</strong> Meskipun kecil, ia menyimpannya. Dan itu cukup untuk membuatnya bergerak.</p>`,
+    backgroundText: "JOURNEY",
+    duration: 3.0,
+    gap: 1.6,
+  },
+  {
+    id: 9,
+    content: `<p>Hari ini, Aksa belum kembali menjadi dirinya yang dulu.</p><p>Tapi setiap langkahnya kini adalah <strong>pilihan sadar untuk tidak menyerah.</strong></p><p>Setiap detik, ia bertaruh pada kemungkinan bahwa dirinya masih bisa kembali menjadi sosok yang bukan hanya baik, tapi berarti.</p>`,
+    backgroundText: "HOPE",
+    duration: 3.5,
+    gap: 2.2,
+  },
+];
+
+// ─── Per-floor Background Text Animation Configs ─────────────────────
+// Each config emotionally supports its narrative beat through motion design.
+
+const BG_ANIM_CONFIGS = {
+  1: { // AWAKENING — floats up like a first breath, exhales away
+    from: { opacity: 0, y: 120, scale: 0.85, filter: "blur(18px)", rotationX: 0, x: 0 },
+    to:   { opacity: 0.9, y: 0, scale: 1, filter: "blur(0px)", rotationX: 0, x: 0 },
+    out:  { opacity: 0, y: -60, scale: 1.04, filter: "blur(10px)" },
+    easeIn: "power1.out", easeOut: "power2.in",
+  },
+  2: { // AKSA — sweeps in with confident momentum from the left
+    from: { opacity: 0, x: -280, scale: 1.08, filter: "blur(6px)", rotationX: 0, y: 0 },
+    to:   { opacity: 1, x: 0, scale: 1, filter: "blur(0px)", rotationX: 0, y: 0 },
+    out:  { opacity: 0, x: 120, scale: 0.96, filter: "blur(10px)" },
+    easeIn: "expo.out", easeOut: "power3.in",
+  },
+  3: { // TIME — spirals in with a slow rotation, aging in place
+    from: { opacity: 0, rotation: -20, scale: 0.92, filter: "blur(8px)", rotationX: 0, x: 0, y: 0 },
+    to:   { opacity: 0.85, rotation: 0, scale: 1, filter: "blur(0px)", rotationX: 0, x: 0, y: 0 },
+    out:  { opacity: 0, rotation: 12, scale: 1.06, filter: "blur(14px)" },
+    easeIn: "power2.out", easeOut: "power2.in",
+  },
+  4: { // STUCK — jitters into place, barely visible, suffocating
+    from: { opacity: 0, x: 8, scale: 1.02, filter: "blur(3px)", rotationX: 0, y: 0 },
+    to:   { opacity: 0.6, x: 0, scale: 1, filter: "blur(0px)", rotationX: 0, y: 0 },
+    out:  { opacity: 0, scale: 0.98, filter: "blur(20px)" },
+    easeIn: "power4.out", easeOut: "power1.in",
+  },
+  5: { // TEST — slams down from above like a verdict
+    from: { opacity: 0, y: -180, scale: 1.4, filter: "blur(12px)", rotationX: 0, x: 0 },
+    to:   { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", rotationX: 0, x: 0 },
+    out:  { opacity: 0, y: 50, scale: 0.9, filter: "blur(8px)" },
+    easeIn: "power4.out", easeOut: "power3.in",
+  },
+  6: { // REALIZE — materializes from pure blur, slow painful clarity
+    from: { opacity: 0, scale: 1.05, filter: "blur(28px)", rotationX: 0, x: 0, y: 0 },
+    to:   { opacity: 0.9, scale: 1, filter: "blur(0px)", rotationX: 0, x: 0, y: 0 },
+    out:  { opacity: 0, scale: 0.95, filter: "blur(16px)" },
+    easeIn: "power1.out", easeOut: "power1.in",
+  },
+  7: { // REFLECTION — tilts in from 3D perspective, like looking in a mirror
+    from: { opacity: 0, scale: 0.9, filter: "blur(10px)", rotationX: 25, x: 0, y: 30 },
+    to:   { opacity: 1, scale: 1, filter: "blur(0px)", rotationX: 0, x: 0, y: 0 },
+    out:  { opacity: 0, scale: 1.02, filter: "blur(8px)", rotationX: -15 },
+    easeIn: "power2.out", easeOut: "power2.in",
+  },
+  8: { // JOURNEY — walks in from the left, steady forward movement
+    from: { opacity: 0, x: -350, scale: 1, filter: "blur(6px)", rotationX: 0, y: 0 },
+    to:   { opacity: 1, x: 0, scale: 1, filter: "blur(0px)", rotationX: 0, y: 0 },
+    out:  { opacity: 0, x: 250, scale: 1, filter: "blur(6px)" },
+    easeIn: "power3.out", easeOut: "power2.in",
+  },
+  9: { // HOPE — breathes in gently from center, expands like the first clean breath
+    from: { opacity: 0, scale: 0.75, filter: "blur(20px)", rotationX: 0, x: 0, y: 0 },
+    to:   { opacity: 1, scale: 1, filter: "blur(0px)", rotationX: 0, x: 0, y: 0 },
+    out:  { opacity: 0, scale: 1.15, filter: "blur(12px)" },
+    easeIn: "power2.out", easeOut: "power1.in",
+  },
+};
+
+// Per-floor content easing — tighter emotional rhythm
+const CONTENT_EASE_MAP = {
+  1: "power2.out",          // AWAKENING — gentle, slow arrival
+  2: "expo.out",            // AKSA — confident snap into place
+  3: "power3.out",          // TIME — measured, deliberate
+  4: "elastic.out(1,0.5)",  // STUCK — trapped vibration, unsettling
+  5: "power4.out",          // TEST — sudden impact
+  6: "sine.out",            // REALIZE — slow, painful clarity
+  7: "power3.out",          // REFLECTION — thoughtful emergence
+  8: "back.out(1.4)",       // JOURNEY — forward momentum with overshoot
+  9: "power2.out",          // HOPE — warm, steady, assured
+};
+
+// ─── Helper: Calculate cumulative timeline start ─────────────────────
+
+function getStartTimeForIndex(index) {
+  return INITIAL_DELAY + FLOOR_TEXTS
+    .slice(0, index)
+    .reduce(
+      (sum, f) => sum + (f.duration || DEFAULT_DURATION) + (f.gap || DEFAULT_GAP),
+      0
+    );
+}
+
+function calculateEndScroll() {
+  const vh = typeof window !== "undefined" ? window.innerHeight : 900;
+  return FLOOR_TEXTS.reduce(
+    (sum, floor) =>
+      sum + ((floor.duration || DEFAULT_DURATION) + (floor.gap || DEFAULT_GAP)) * vh,
+    0
+  );
+}
+
+// ─── Component ───────────────────────────────────────────────────────
 
 export default function ThreeScene() {
   const containerRef = useRef(null);
   const [progress, setProgress] = useState(0);
   const [botReady, setBotReady] = useState(false);
-  const [lenisReady, setLenisReady] = useState(false);
+  const botReadyRef = useRef(false); // Ref to avoid re-creating timeline when botReady changes
   const [activeFloorId, setActiveFloorId] = useState(null);
   const [isActive, setIsActive] = useState(false);
   const textRefs = useRef([]);
   const backgroundTextRefs = useRef([]);
-  const lenisRef = useRef(null);
-  const titleRef = useRef(null);
-  const splitTitleRef = useRef(null);
   const isInitialLoad = useRef(true);
 
-  const floorTexts = useMemo(
-    () => [
-      {
-        id: 1,
-        content: `<p>Di sebuah pagi yang tampak biasa,<br>seseorang terbangun—namun dunia di sekitarnya<br>tidak lagi terasa sama.</p>`,
-        backgroundText: "AWAKENING",
-        duration: 2.5,
-        gap: 1.5,
-      },
-      {
-        id: 2,
-        content: `<p><strong>Namanya Aksa.</strong></p><p>Pernah, di masa silam, ia dikenal sebagai sosok yang menyala. Dalam diamnya, ada nyala tekad. Dalam langkahnya, ada arah yang selalu jelas.</p><p>Ia bukan hanya cerdas, tapi juga penuh visi. Seakan segala hal yang disentuhnya, tumbuh menjadi sesuatu yang berarti.</p>`,
-        backgroundText: "AKSA",
-        duration: 3.5,
-        gap: 1.8,
-      },
-      {
-        id: 3,
-        content: `<p>Namun waktu… tak selalu bersahabat.</p><p>Perlahan, tanpa disadarinya, Aksa mulai berjalan tanpa arah. Bukan karena ia kehilangan tujuan, tapi karena terlalu lama membiarkan dirinya terjebak dalam kenyamanan semu.</p>`,
-        backgroundText: "TIME",
-        duration: 3.2,
-        gap: 2.0,
-      },
-      {
-        id: 4,
-        content: `<p>Hari-harinya diisi dengan distraksi kecil yang menjelma besar. Ia menunda, menanti, lalu mengulanginya. Hari demi hari, tanpa progres. Ia tahu itu, <br><br><strong>tapi seperti lumpur, makin ia mencoba bergerak, makin dalam ia tenggelam.</strong></p>`,
-        backgroundText: "STUCK",
-        duration: 4.2,
-        gap: 2.2,
-      },
-      {
-        id: 5,
-        content: `<p>Hingga akhirnya… datang ujian itu.</p><p>Bukan bencana besar, bukan pula kegagalan mencolok. Tapi cukup untuk menyentaknya.</p>`,
-        backgroundText: "TEST",
-        duration: 2.8,
-        gap: 1.5,
-      },
-      {
-        id: 6,
-        content: `<p>Sebuah kesempatan besar—yang dulu akan ia taklukkan dengan mudah—kini berdiri di hadapannya, dan <br><br><strong>ia sadar: ia tidak lagi siap.</strong></p><p>Tangannya ragu, pikirannya lambat, hatinya ciut.</p>`,
-        backgroundText: "REALIZE",
-        duration: 3.5,
-        gap: 1.8,
-      },
-      {
-        id: 7,
-        content: `<p>Saat itulah ia melihat bayangannya sendiri.</p><p>Bukan yang ada di cermin, tapi yang ada dalam ingatannya—versi dirinya yang dulu. Yang penuh bara. Yang bisa menyala kapan saja.</p><p><strong>Ia tidak ingin menjadi penonton dari hidupnya sendiri.</strong></p>`,
-        backgroundText: "REFLECTION",
-        duration: 3.8,
-        gap: 2.0,
-      },
-      {
-        id: 8,
-        content: `<p>Perjalanan kembali dimulai. Berat. Lambat. Penuh rasa malu karena harus mengulang.</p><p>Tapi satu hal yang kini tertanam kuat di dadanya: <strong>ia masih punya nyala.</strong> Meskipun kecil, ia menyimpannya. Dan itu cukup untuk membuatnya bergerak.</p>`,
-        backgroundText: "JOURNEY",
-        duration: 3.0,
-        gap: 1.6,
-      },
-      {
-        id: 9,
-        content: `<p>Hari ini, Aksa belum kembali menjadi dirinya yang dulu.</p><p>Tapi setiap langkahnya kini adalah <strong>pilihan sadar untuk tidak menyerah.</strong></p><p>Setiap detik, ia bertaruh pada kemungkinan bahwa dirinya masih bisa kembali menjadi sosok yang bukan hanya baik, tapi berarti.</p>`,
-        backgroundText: "HOPE",
-        duration: 3.5,
-        gap: 2.2,
-      },
-    ],
-    []
-  );
+  // Lenis from centralized provider (no more duplicate instances)
+  const { lenis, isReady: lenisReady } = useLenis();
 
+  // ─── Preload GLTF model ───────────────────────────────────────────
   useEffect(() => {
     const preloadGLTF = async () => {
-      const { GLTFLoader } = await import(
-        "three/examples/jsm/loaders/GLTFLoader"
-      );
+      const { GLTFLoader } = await import("three/examples/jsm/loaders/GLTFLoader");
       const loader = new GLTFLoader();
-      loader.load("/models/bot.glb", () => { });
+      loader.load("/models/bot.glb", () => {});
     };
     preloadGLTF();
   }, []);
 
-  useEffect(() => {
-    const initLenis = async () => {
-      const Lenis = (await import("@studio-freight/lenis")).default;
-      const isMobile = window.innerWidth <= 768;
-      lenisRef.current = new Lenis({
-        lerp: isMobile ? 0.08 : 0.05,
-        smoothWheel: true,
-        syncTouch: true,
-        touchMultiplier: isMobile ? 1.2 : 1.5,
-      });
-      lenisRef.current.on("scroll", ScrollTrigger.update);
-      const raf = (time) => {
-        lenisRef.current.raf(time);
-        requestAnimationFrame(raf);
-      };
-      requestAnimationFrame(raf);
-      setLenisReady(true);
-    };
-    initLenis();
-    return () => lenisRef.current?.destroy();
-  }, []);
+  // ─── Lenis now provided by SmoothScrollProvider ──────────────────
 
+  // ─── GSAP ScrollTrigger Master Timeline ───────────────────────────
   useEffect(() => {
     if (!lenisReady) return;
-
-    // register plugin
     gsap.registerPlugin(ScrollTrigger);
 
-    // --- Reset baseline for left-aligned elements & background text
-    // This prevents leftover transforms from previous GSAP runs.
+    // Reset baseline: ensure animated elements start clean
     if (containerRef.current) {
       try {
-        const leftSelector = `.${styles.leftTopAlign}`;
-        const bgSelector = `.${styles.backgroundTextElement}`;
-        const leftEls = containerRef.current.querySelectorAll(leftSelector);
-        const bgEls = containerRef.current.querySelectorAll(bgSelector);
-
-        // Set them to a clean baseline: no transform, x=0, y=0
-        if (leftEls.length)
-          gsap.set(leftEls, { x: 0, y: 0, transform: "none" });
-        if (bgEls.length) gsap.set(bgEls, { x: 0, y: 0, transform: "none" });
-      } catch (err) {
-        // fallback: ignore if selector issues
-        // console.warn(err);
-      }
+        const bgEls = containerRef.current.querySelectorAll(`.${styles.backgroundTextElement}`);
+        if (bgEls.length) {
+          gsap.set(bgEls, { opacity: 0, scale: 1, x: 0, y: 0, rotation: 0, rotationX: 0, filter: "blur(8px)" });
+        }
+      } catch (_) { /* selector issues fallback */ }
     }
 
-    const getStartTimeForIndex = (index) => {
-      return INITIAL_DELAY + floorTexts
-        .slice(0, index)
-        .reduce(
-          (sum, f) =>
-            sum + (f.duration || DEFAULT_DURATION) + (f.gap || DEFAULT_GAP),
-          0
-        );
-    };
-
-    const calculateEndScroll = () => {
-      const windowHeight = window.innerHeight;
-      return floorTexts.reduce(
-        (sum, floor) =>
-          sum +
-          ((floor.duration || DEFAULT_DURATION) + (floor.gap || DEFAULT_GAP)) *
-          windowHeight,
-        0
-      );
-    };
-
-    const animateTitle = () => {
-      splitTitleRef.current = new SplitType(titleRef.current, {
-        types: "chars",
-      });
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: titleRef.current,
-          start: "top center",
-          end: "+=400",
-          toggleActions: "play none reverse none",
-        },
-      });
-      tl.fromTo(
-        splitTitleRef.current.chars,
-        { opacity: 0, x: 100, rotationY: 90 },
-        {
-          opacity: 1,
-          x: 0,
-          rotationY: 0,
-          duration: 1.5,
-          ease: "back.out(1.7)",
-          stagger: 0.05,
-        }
-      ).to(
-        splitTitleRef.current.chars,
-        {
-          opacity: 0,
-          x: -100,
-          rotationY: -90,
-          duration: 1,
-          ease: "power3.in",
-          stagger: 0.03,
-        },
-        "+=2"
-      );
-    };
-
     const animateFloorTexts = (tl) => {
-      floorTexts.forEach((floor, i) => {
+      FLOOR_TEXTS.forEach((floor, i) => {
         const textRef = textRefs.current[i];
         const backgroundTextRef = backgroundTextRefs.current[i];
         if (!textRef || !backgroundTextRef) return;
+
         const start = getStartTimeForIndex(i);
         const thisDuration = floor.duration || DEFAULT_DURATION;
 
-        // <-- MATCHING LOGIC: include id 7 here so animations use same baseline as render
         const alignLeft = [1, 3, 5, 7, 9].includes(floor.id);
         const y = alignLeft ? -20 : 0;
-        // x offset used in animation (kept from original design)
-        const x = alignLeft ? -348 : 0;
-        const scale = 1;
+        const x = alignLeft ? -Math.min(window.innerWidth * 0.24, 348) : 0;
 
-        // Standardize background text position to match render (px left)
-        // ganti ini
-        const bgPosition = {
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-        };
+        // Timing distribution for BG + content sequencing
+        const bgInDuration = thisDuration * 0.20;
+        const bgStayDuration = thisDuration * 0.10;
+        const bgOutDuration = thisDuration * 0.15;
+        const gapDuration = thisDuration * 0.15;
+        const contentInDuration = thisDuration * 0.25;
+        const contentExitDuration = thisDuration * 0.15;
 
-        // NEW SEQUENCE: BG In -> BG Out -> GAP -> Content In
-        const bgInDuration = thisDuration * 0.25;
-        const bgStayDuration = thisDuration * 0.15;
-        const bgOutDuration = thisDuration * 0.25;
-        const gapDuration = thisDuration * 0.05; // Small gap to ensure BG is fully gone
-        const contentInDuration = thisDuration * 0.30;
+        const bgConf = BG_ANIM_CONFIGS[floor.id] || BG_ANIM_CONFIGS[1];
 
-        // 1. Background Text In
-        tl.fromTo(
-          backgroundTextRef,
-          { opacity: 0, scale: 0.95, filter: "blur(8px)" },
-          {
-            opacity: 1,
-            scale: 1,
-            filter: "blur(0px)",
-            duration: bgInDuration,
-            ease: "power2.out",
-          },
-          start
-        );
+        // 1. Background Text IN
+        tl.fromTo(backgroundTextRef, bgConf.from, {
+          ...bgConf.to,
+          duration: bgInDuration,
+          ease: bgConf.easeIn,
+        }, start);
 
-        // 2. Background Text Out
-        tl.to(
-          backgroundTextRef,
-          {
-            opacity: 0,
-            scale: 1.05,
-            filter: "blur(8px)",
-            duration: bgOutDuration,
-            ease: "power2.in",
-          },
-          start + bgInDuration + bgStayDuration
-        );
+        // 1b. STUCK glitch shake
+        if (floor.id === 4) {
+          tl.to(backgroundTextRef, {
+            x: "+=3", duration: 0.05, yoyo: true, repeat: 5, ease: "none",
+          }, start + bgInDuration);
+        }
 
-        // 3. Content In (After BG Out + Gap)
+        // 2. Background Text OUT
+        tl.to(backgroundTextRef, {
+          ...bgConf.out,
+          duration: bgOutDuration,
+          ease: bgConf.easeOut,
+        }, start + bgInDuration + bgStayDuration);
+
+        // 3. Content IN — after BG exits + gap
         const contentStart = start + bgInDuration + bgStayDuration + bgOutDuration + gapDuration;
 
-        tl.fromTo(
-          textRef,
-          { 
-            opacity: 0, 
-            y: 50, 
-            x: x - 20, 
-            scale: 0.98, 
-            filter: "blur(10px)", 
-            rotationX: 15,
-            skewX: -5 
-          },
+        tl.fromTo(textRef,
+          { opacity: 0, y: 40, x: x - 15, scale: 0.98, filter: "blur(8px)", rotationX: 8 },
           {
-            opacity: 1,
-            y,
-            x,
-            scale,
-            filter: "blur(0px)",
-            rotationX: 0,
-            skewX: 0,
+            opacity: 1, y, x, scale: 1, filter: "blur(0px)", rotationX: 0,
             duration: contentInDuration,
-            ease: "back.out(1.4)",
-            onStart: () => {
-              setActiveFloorId(floor.id);
-            },
-            onReverseComplete: () => {
-              setActiveFloorId(null);
-            },
+            ease: CONTENT_EASE_MAP[floor.id] || "power3.out",
+            onStart: () => setActiveFloorId(floor.id),
+            onReverseComplete: () => setActiveFloorId(null),
           },
           contentStart
         );
 
-        // Content Exit (End of section)
-        tl.to(
-          textRef,
-          {
-            opacity: 0,
-            y: y - 50,
-            scale: 0.95,
-            filter: "blur(5px)",
-            rotationX: -10,
-            duration: thisDuration * 0.2, // Quick exit at the end
-            ease: "power3.in",
-            onComplete: () => {
-              // Clear active floor when content exits (except for floor 7 which continues to floor 8)
-              if (floor.id !== 7) {
-                setActiveFloorId(null);
-              }
-            },
-            onReverseComplete: () => {
-              // Restore active floor when scrolling back down into content
-              setActiveFloorId(floor.id);
-            },
-          },
-          start + thisDuration - (thisDuration * 0.2)
-        );
+        // 4. Content EXIT
+        tl.to(textRef, {
+          opacity: 0, y: y - 40, scale: 0.96, filter: "blur(5px)", rotationX: -6,
+          duration: contentExitDuration,
+          ease: "circ.in",
+          onComplete: () => { if (floor.id !== 7) setActiveFloorId(null); },
+          onReverseComplete: () => setActiveFloorId(floor.id),
+        }, start + thisDuration - contentExitDuration);
       });
     };
 
     const ctx = gsap.context(() => {
-      // Background color trigger for transition to black
-      ScrollTrigger.create({
-        trigger: containerRef.current,
-        start: "top center",
-        onEnter: () => {
-          gsap.to("#main-bg", { backgroundColor: "#000000", duration: 1 });
-        },
-      });
-
-      // Title fade - complete before AWAKENING appears
-      gsap.to(titleRef.current, {
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top top",
-          end: "10% top",
-          scrub: true,
-        },
-        opacity: 0,
-        y: -100,
-        ease: "power2.in",
-      });
+      // Background color ScrollTrigger removed — handled by page.js
 
       const masterTL = gsap.timeline({
         scrollTrigger: {
@@ -372,16 +310,18 @@ export default function ThreeScene() {
           onUpdate: (self) => {
             const p = Math.min(1, Math.max(0, self.progress));
             setProgress(p);
-            if (p >= SCROLL_THRESHOLD && !botReady) setBotReady(true);
+            if (p >= SCROLL_THRESHOLD && !botReadyRef.current) {
+              botReadyRef.current = true;
+              setBotReady(true);
+            }
           },
         },
       });
 
-      animateTitle();
       animateFloorTexts(masterTL);
 
-      if (lenisRef.current && isInitialLoad.current) {
-        lenisRef.current.scrollTo(0, { immediate: true });
+      if (lenis && isInitialLoad.current) {
+        lenis.scrollTo(0, { immediate: true });
         isInitialLoad.current = false;
       }
 
@@ -389,14 +329,17 @@ export default function ThreeScene() {
     }, containerRef);
 
     return () => ctx.revert();
-  }, [lenisReady, botReady, floorTexts]);
+  }, [lenisReady]); // botReady removed — uses ref to avoid timeline re-creation
+
+  // ─── Render ───────────────────────────────────────────────────────
 
   return (
-    <section 
-      ref={containerRef} 
+    <section
+      ref={containerRef}
       className={styles.container}
-      style={{ backgroundColor: "black" }} // Force full black for this section
+      style={{ backgroundColor: "black" }}
     >
+      {/* Progress Bar */}
       <div className={styles.progressBarWrapper} style={{ display: isActive ? "block" : "none" }}>
         <div
           className={styles.progressBar}
@@ -404,8 +347,12 @@ export default function ThreeScene() {
         />
       </div>
 
-      <div className={styles.backgroundTextFixedContainer} style={{ opacity: isActive ? 1 : 0, visibility: isActive ? "visible" : "hidden" }}>
-        {floorTexts.map((floor, i) => (
+      {/* Background Text Overlay */}
+      <div
+        className={styles.backgroundTextFixedContainer}
+        style={{ opacity: isActive ? 1 : 0, visibility: isActive ? "visible" : "hidden" }}
+      >
+        {FLOOR_TEXTS.map((floor, i) => (
           <div
             key={floor.id}
             ref={(el) => (backgroundTextRefs.current[i] = el)}
@@ -416,53 +363,24 @@ export default function ThreeScene() {
         ))}
       </div>
 
-      <div className={styles.canvasWrapper} style={{ opacity: isActive ? 1 : 0, visibility: isActive ? "visible" : "hidden" }}>
-        <ThreeCanvas scrollY={progress} botReady={botReady} />
+      {/* Three.js Canvas */}
+      <div
+        className={styles.canvasWrapper}
+        style={{ opacity: isActive ? 1 : 0, visibility: isActive ? "visible" : "hidden" }}
+      >
+        <ThreeCanvas scrollY={progress} botReady={botReady} activeFloorId={activeFloorId} />
       </div>
 
-      <section className={styles.backgroundTitleWrapper} style={{ opacity: progress > 0.1 ? 0 : 1 }}>
-        <div className="header-tag">Story of Aksa</div>
-        <h2
-          ref={titleRef}
-          className={styles.backgroundTitle}
-          style={{
-            fontFamily: "'Bebas Neue', sans-serif",
-            fontWeight: 400,
-            fontSize: "82px",
-            lineHeight: "1.1",
-            color: "#fff",
-            textShadow: "0 0 15px rgba(0,0,0,0.7)",
-            mixBlendMode: "normal",
-            letterSpacing: "1px",
-            width: "100vw",
-            maxWidth: "100vw",
-            whiteSpace: "nowrap",
-            overflow: "visible",
-            textTransform: "uppercase",
-          }}
-        >
-          Bayangan yang ia tinggalkan
-        </h2>
-      </section>
-
+      {/* Floor Text Slides */}
       <div className={styles.slidesContainer}>
-        {floorTexts.map((floor, i) => {
-          const isId1 = floor.id === 1;
-          const isId3 = floor.id === 3;
-          const isId5 = floor.id === 5;
-          const isId6 = floor.id === 6;
-          const isId7 = floor.id === 7;
-          const isId9 = floor.id === 9;
-
-          // MATCH rendering group — id7 included here
-          const alignLeft = isId1 || isId3 || isId5 || isId7 || isId9;
-          const shiftRightTop = isId6;
+        {FLOOR_TEXTS.map((floor, i) => {
+          const alignLeft = [1, 3, 5, 7, 9].includes(floor.id);
+          const shiftRightTop = floor.id === 6;
 
           return (
             <section
               key={floor.id}
-              className={`${styles.slide} ${styles.floorText} ${alignLeft ? styles.leftTopAlign : ""
-                } ${shiftRightTop ? styles.rightTopAlign : ""}`}
+              className={`${styles.slide} ${styles.floorText} ${alignLeft ? styles.leftTopAlign : ""} ${shiftRightTop ? styles.rightTopAlign : ""}`}
               style={
                 alignLeft
                   ? {
@@ -489,8 +407,7 @@ export default function ThreeScene() {
             >
               <div
                 ref={(el) => (textRefs.current[i] = el)}
-                className={`${styles.textPanel} ${alignLeft ? styles.leftPanel : ""
-                  } ${shiftRightTop ? styles.rightPanel : ""}`}
+                className={`${styles.textPanel} ${alignLeft ? styles.leftPanel : ""} ${shiftRightTop ? styles.rightPanel : ""}`}
                 style={
                   alignLeft
                     ? { textAlign: "left", padding: "0", width: "100%" }
@@ -501,19 +418,10 @@ export default function ThreeScene() {
               >
                 <div
                   className={styles.textFrame}
-                  style={{
-                    fontFamily: "'Bebas Neue', sans-serif",
-                    fontWeight: 400,
-                    fontSize: alignLeft ? "44px" : "36px",
-                    lineHeight: "1.3",
-                    color: "#fff",
-                    letterSpacing: "1px",
-                    textTransform: "uppercase",
-                  }}
                   dangerouslySetInnerHTML={{ __html: floor.content }}
                 />
 
-                {isId5 && (
+                {floor.id === 5 && (
                   <div style={{ marginTop: "40px" }}>
                     <LycagonFace />
                   </div>

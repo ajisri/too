@@ -1,12 +1,18 @@
 /**
  * Story content for ThreeDModel component
  * Separated from component logic for better maintainability and i18n support
+ * 
+ * Typography notes:
+ * - \u2014 = em-dash (used for dramatic pauses and parenthetical breaks)
+ * - \u2026 = ellipsis (used for trailing off, uncertainty)
+ * - <strong> = narrative emphasis — rendered as Playfair Display italic
+ * - Paragraph breaks control reading rhythm and breathing space
  */
 
 export const storyFloors = [
     {
         id: 1,
-        content: `<p>Di sebuah pagi yang tampak biasa, seseorang terbangun—namun dunia di sekitarnya tidak lagi terasa sama.</p>`,
+        content: `<p>Di sebuah pagi yang tampak biasa, seseorang terbangun\u2014namun dunia di sekitarnya tidak lagi terasa sama.</p>`,
         backgroundText: "AWAKENING",
         duration: 4.2,
         gap: 2.8,
@@ -20,35 +26,35 @@ export const storyFloors = [
     },
     {
         id: 3,
-        content: `<p>Namun waktu… tak selalu bersahabat.</p><p>Perlahan, tanpa disadarinya, Aksa mulai berjalan tanpa arah. Bukan karena ia kehilangan tujuan, tapi karena terlalu lama membiarkan dirinya terjebak dalam kenyamanan semu.</p>`,
+        content: `<p>Namun waktu\u2026 tak selalu bersahabat.</p><p>Perlahan, tanpa disadarinya, Aksa mulai berjalan tanpa arah. Bukan karena ia kehilangan tujuan, tapi karena terlalu lama membiarkan dirinya terjebak dalam kenyamanan semu.</p>`,
         backgroundText: "TIME",
         duration: 6.0,
         gap: 3.5,
     },
     {
         id: 4,
-        content: `<p>Hari-harinya diisi dengan distraksi kecil yang menjelma besar. Ia menunda, menanti, lalu mengulanginya. Hari demi hari, tanpa progres. Ia tahu itu, <br><br><strong>tapi seperti lumpur, makin ia mencoba bergerak, makin dalam ia tenggelam.</strong></p>`,
+        content: `<p>Hari-harinya diisi dengan distraksi kecil yang menjelma besar. Ia menunda, menanti, lalu mengulanginya. Hari demi hari, tanpa progres.</p><p>Ia tahu itu\u2014</p><p><strong>tapi seperti lumpur, makin ia mencoba bergerak, makin dalam ia tenggelam.</strong></p>`,
         backgroundText: "STUCK",
         duration: 7.0,
         gap: 4.2,
     },
     {
         id: 5,
-        content: `<p>Hingga akhirnya… datang ujian itu.</p><p>Bukan bencana besar, bukan pula kegagalan mencolok. Tapi cukup untuk menyentaknya.</p>`,
+        content: `<p>Hingga akhirnya\u2026 datang ujian itu.</p><p>Bukan bencana besar, bukan pula kegagalan mencolok. Tapi cukup untuk menyentaknya.</p>`,
         backgroundText: "TEST",
         duration: 4.8,
         gap: 2.8,
     },
     {
         id: 6,
-        content: `<p>Sebuah kesempatan besar—yang dulu akan ia taklukkan dengan mudah—kini berdiri di hadapannya, dan <br><br><strong>ia sadar: ia tidak lagi siap.</strong></p><p>Tangannya ragu, pikirannya lambat, hatinya ciut.</p>`,
+        content: `<p>Sebuah kesempatan besar\u2014yang dulu akan ia taklukkan dengan mudah\u2014kini berdiri di hadapannya, dan</p><p><strong>ia sadar: ia tidak lagi siap.</strong></p><p>Tangannya ragu, pikirannya lambat, hatinya ciut.</p>`,
         backgroundText: "REALIZE",
         duration: 6.0,
         gap: 3.5,
     },
     {
         id: 7,
-        content: `<p>Saat itulah ia melihat bayangannya sendiri.</p><p>Bukan yang ada di cermin, tapi yang ada dalam ingatannya—versi dirinya yang dulu. Yang penuh bara. Yang bisa menyala kapan saja.</p><p><strong>Ia tidak ingin menjadi penonton dari hidupnya sendiri.</strong></p>`,
+        content: `<p>Saat itulah ia melihat bayangannya sendiri.</p><p>Bukan yang ada di cermin, tapi yang ada dalam ingatannya\u2014versi dirinya yang dulu. Yang penuh bara. Yang bisa menyala kapan saja.</p><p><strong>Ia tidak ingin menjadi penonton dari hidupnya sendiri.</strong></p>`,
         backgroundText: "REFLECTION",
         duration: 7.2,
         gap: 3.8,

@@ -15,10 +15,32 @@ import * as THREE from "three";
 import { useSpring, a } from "@react-spring/three";
 import { useIsMobile, useIsTablet } from "@/hooks/useMediaQuery";
 import { Float } from "@react-three/drei";
+import StoryBackgrounds from "./StoryBackgrounds";
+// Native Three.js post-processing (avoids @react-three/postprocessing compatibility issues)
+import { EffectComposer as ThreeEffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass";
 
-// 1. Atmospheric God Rays (Sharp/Bright for Awakening/Aksa)
+// 1. Atmospheric God Rays — per-floor mood-matched light beams
+// Each floor gets intentional atmospheric light: color, intensity, and rotation
+// that emotionally support the narrative beat.
+const GOD_RAY_MOODS = {
+  0: { opacity: 0.5,  color: "#8090b8", rotation: 0.15, strength: 0.4  }, // AWAKENING — cold dawn, uncertain
+  1: { opacity: 0.7,  color: "#ffcc66", rotation: 0.2,  strength: 0.6  }, // AKSA — golden confidence
+  2: { opacity: 0.25, color: "#c8a860", rotation: -0.1, strength: 0.3  }, // TIME — fading amber
+  3: { opacity: 0.08, color: "#6655aa", rotation: 0.0,  strength: 0.15 }, // STUCK — suffocated, dim purple
+  4: { opacity: 0.6,  color: "#ccddff", rotation: 0.3,  strength: 0.7  }, // TEST — cold lightning flash
+  5: { opacity: 0.15, color: "#6688bb", rotation: 0.05, strength: 0.25 }, // REALIZE — dim blue clarity
+  6: { opacity: 0.35, color: "#ff8844", rotation: -0.15,strength: 0.4  }, // REFLECTION — warm introspection
+  7: { opacity: 0.55, color: "#ff6622", rotation: 0.25, strength: 0.55 }, // JOURNEY — ember warmth
+  8: { opacity: 0.65, color: "#ffdd88", rotation: 0.2,  strength: 0.6  }, // HOPE — full golden rays
+};
+
 function StoryGodRays({ currentPart, opacity }) {
   const meshRef = useRef();
+  const groupRef = useRef();
+  const targetColorRef = useRef(new THREE.Color("#ffffff"));
   
   const shaderMaterial = useMemo(() => new THREE.ShaderMaterial({
     transparent: true,
@@ -45,10 +67,15 @@ function StoryGodRays({ currentPart, opacity }) {
       uniform float uStrength;
       
       void main() {
-        float beam = smoothstep(0.4, 0.5, vUv.x) * smoothstep(0.6, 0.5, vUv.x);
-        float fade = pow(1.0 - vUv.y, 2.0);
-        float noise = sin(vUv.y * 10.0 + time * 2.0) * 0.1 + 0.9;
-        float alpha = beam * fade * uOpacity * uStrength * noise;
+        // Multi-beam god rays with parallax depth
+        float beam1 = smoothstep(0.38, 0.5, vUv.x) * smoothstep(0.62, 0.5, vUv.x);
+        float beam2 = smoothstep(0.25, 0.32, vUv.x) * smoothstep(0.39, 0.32, vUv.x) * 0.4;
+        float beam3 = smoothstep(0.65, 0.72, vUv.x) * smoothstep(0.79, 0.72, vUv.x) * 0.3;
+        float beams = beam1 + beam2 + beam3;
+        float fade = pow(1.0 - vUv.y, 1.8);
+        float shimmer = sin(vUv.y * 12.0 + time * 1.5) * 0.08 + 0.92;
+        float dust = sin(vUv.y * 40.0 + time * 3.0) * sin(vUv.x * 30.0 + time) * 0.04 + 0.96;
+        float alpha = beams * fade * uOpacity * uStrength * shimmer * dust;
         gl_FragColor = vec4(uColor, alpha);
       }
     `
@@ -58,20 +85,31 @@ function StoryGodRays({ currentPart, opacity }) {
     if (!meshRef.current) return;
     shaderMaterial.uniforms.time.value = state.clock.elapsedTime;
     
-    // Logic for God Rays: Strongest during Awakening (0) and Aksa (1), disappearing during Time/Stuck
-    let targetOpacity = 0;
-    if (currentPart === 0 || currentPart === 1) targetOpacity = 0.6;
-    if (currentPart === 8) targetOpacity = 0.4; // Hope rays
+    const mood = GOD_RAY_MOODS[currentPart] || GOD_RAY_MOODS[0];
+    targetColorRef.current.set(mood.color);
     
     shaderMaterial.uniforms.uOpacity.value = THREE.MathUtils.lerp(
       shaderMaterial.uniforms.uOpacity.value,
-      targetOpacity * opacity,
-      0.05
+      mood.opacity * opacity,
+      0.04
     );
+    shaderMaterial.uniforms.uStrength.value = THREE.MathUtils.lerp(
+      shaderMaterial.uniforms.uStrength.value,
+      mood.strength,
+      0.04
+    );
+    shaderMaterial.uniforms.uColor.value.lerp(targetColorRef.current, 0.03);
+    
+    // Smooth rotation shift per mood
+    if (groupRef.current) {
+      groupRef.current.rotation.z = THREE.MathUtils.lerp(
+        groupRef.current.rotation.z, mood.rotation, 0.02
+      );
+    }
   });
 
   return (
-    <group rotation={[0, 0, 0.2]}>
+    <group ref={groupRef} rotation={[0, 0, 0.2]}>
       <mesh ref={meshRef} position={[0, 5, -5]} scale={[20, 30, 1]}>
         <planeGeometry />
         <primitive object={shaderMaterial} attach="material" />
@@ -80,17 +118,31 @@ function StoryGodRays({ currentPart, opacity }) {
   );
 }
 
-// 2. Story Particles (Embers/Glow)
+// 2. Story Particles — per-floor atmospheric motes
+// Every floor has particles with mood-matched color, density, and speed.
+const PARTICLE_MOODS = {
+  0: { opacity: 0.20, color: "#8899bb", speed: 0.3, size: 8   }, // AWAKENING — slow silver dust, barely visible
+  1: { opacity: 0.45, color: "#ffcc44", speed: 0.5, size: 12  }, // AKSA — warm golden motes, confident
+  2: { opacity: 0.15, color: "#aa9966", speed: 0.8, size: 6   }, // TIME — small amber sand grains, rushing
+  3: { opacity: 0.10, color: "#665588", speed: 0.15,size: 4   }, // STUCK — faint purple specks, nearly frozen
+  4: { opacity: 0.50, color: "#aabbff", speed: 2.0, size: 3   }, // TEST — fast white sparks, electric
+  5: { opacity: 0.18, color: "#6699cc", speed: 0.4, size: 10  }, // REALIZE — cold blue drifters
+  6: { opacity: 0.35, color: "#ff7744", speed: 0.35,size: 14  }, // REFLECTION — large warm embers, contemplative
+  7: { opacity: 0.50, color: "#ff5500", speed: 0.6, size: 11  }, // JOURNEY — bright ember sparks
+  8: { opacity: 0.65, color: "#ffdd66", speed: 0.45,size: 16  }, // HOPE — big golden fireflies, full
+};
+
 function StoryParticles({ currentPart, opacity }) {
   const pointsRef = useRef();
+  const targetColorRef = useRef(new THREE.Color("#ffffff"));
   
-  const particleCount = 150;
+  const particleCount = 180;
   const positions = useMemo(() => {
     const pos = new Float32Array(particleCount * 3);
     for (let i = 0; i < particleCount; i++) {
-        pos[i * 3] = (Math.random() - 0.5) * 10;
-        pos[i * 3 + 1] = Math.random() * 10 - 2;
-        pos[i * 3 + 2] = (Math.random() - 0.5) * 10 - 2;
+        pos[i * 3] = (Math.random() - 0.5) * 12;
+        pos[i * 3 + 1] = Math.random() * 12 - 3;
+        pos[i * 3 + 2] = (Math.random() - 0.5) * 12 - 2;
     }
     return pos;
   }, []);
@@ -101,17 +153,23 @@ function StoryParticles({ currentPart, opacity }) {
     uniforms: {
       time: { value: 0 },
       uOpacity: { value: 0 },
-      uColor: { value: new THREE.Color("#ffffff") }
+      uColor: { value: new THREE.Color("#ffffff") },
+      uSpeed: { value: 0.5 },
+      uSize: { value: 12.0 }
     },
     vertexShader: `
       uniform float time;
+      uniform float uSpeed;
+      uniform float uSize;
       varying float vOpacity;
       void main() {
         vec3 pos = position;
-        pos.y += mod(time * 0.5 + position.y, 10.0) - 5.0;
-        pos.x += sin(time + position.z) * 0.2;
-        vOpacity = 1.0 - abs(pos.y / 5.0);
-        gl_PointSize = (1.0 + sin(time + position.x) * 0.5) * 15.0;
+        pos.y += mod(time * uSpeed + position.y, 12.0) - 6.0;
+        pos.x += sin(time * 0.7 + position.z * 0.8) * 0.3;
+        pos.z += cos(time * 0.5 + position.x * 0.6) * 0.15;
+        vOpacity = 1.0 - abs(pos.y / 6.0);
+        vOpacity *= smoothstep(0.0, 0.3, vOpacity);
+        gl_PointSize = (1.0 + sin(time * 0.8 + position.x) * 0.4) * uSize;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
       }
     `,
@@ -122,7 +180,9 @@ function StoryParticles({ currentPart, opacity }) {
       void main() {
         float d = distance(gl_PointCoord, vec2(0.5));
         if (d > 0.5) discard;
-        float finalAlpha = (0.5 - d) * 2.0 * vOpacity * uOpacity;
+        // Softer falloff for more organic glow
+        float glow = pow(1.0 - d * 2.0, 1.5);
+        float finalAlpha = glow * vOpacity * uOpacity;
         gl_FragColor = vec4(uColor, finalAlpha);
       }
     `
@@ -132,29 +192,21 @@ function StoryParticles({ currentPart, opacity }) {
     if (!pointsRef.current) return;
     shaderMaterial.uniforms.time.value = state.clock.elapsedTime;
     
-    // Embers during Journey (7) and Hope (8)
-    let targetOpacity = 0;
-    let targetColor = new THREE.Color("#ffffff");
-    
-    if (currentPart === 7) { 
-        targetOpacity = 0.4; 
-        targetColor.set("#ff5500"); // Red/Orange Embers
-    }
-    if (currentPart === 8) { 
-        targetOpacity = 0.7; 
-        targetColor.set("#ffcc00"); // Golden Hope Glow
-    }
-    if (currentPart === 0) {
-        targetOpacity = 0.2;
-        targetColor.set("#ffffff"); // Soft white specks
-    }
+    const mood = PARTICLE_MOODS[currentPart] || PARTICLE_MOODS[0];
+    targetColorRef.current.set(mood.color);
 
     shaderMaterial.uniforms.uOpacity.value = THREE.MathUtils.lerp(
         shaderMaterial.uniforms.uOpacity.value,
-        targetOpacity * opacity,
-        0.05
+        mood.opacity * opacity,
+        0.04
     );
-    shaderMaterial.uniforms.uColor.value.lerp(targetColor, 0.05);
+    shaderMaterial.uniforms.uSpeed.value = THREE.MathUtils.lerp(
+        shaderMaterial.uniforms.uSpeed.value, mood.speed, 0.03
+    );
+    shaderMaterial.uniforms.uSize.value = THREE.MathUtils.lerp(
+        shaderMaterial.uniforms.uSize.value, mood.size, 0.03
+    );
+    shaderMaterial.uniforms.uColor.value.lerp(targetColorRef.current, 0.04);
   });
 
   return (
@@ -482,14 +534,94 @@ const fragmentShader = `
 `;
 
 
-function FloatingIsland({ opacity = 1, currentPart }) {
+// ─── Instanced Flowers ("segala hal yang disentuhnya, tumbuh") ────────
+// Flowers bloom outward from Aksa's position with distance-based ripple delay.
+function FlowerInstances({ growthProgress, opacity }) {
+  const meshRef = useRef();
+  const dummyRef = useRef(new THREE.Object3D());
+  const isMobile = useIsMobile();
+  const count = isMobile ? 60 : 120;
+
+  // Pre-compute flower positions and properties once
+  const flowerData = useMemo(() => {
+    const data = [];
+    for (let i = 0; i < count; i++) {
+      const r = 0.25 + Math.random() * 1.3;
+      const theta = Math.random() * Math.PI * 2;
+      data.push({
+        x: r * Math.cos(theta),
+        z: r * Math.sin(theta),
+        y: 1.0,
+        rotY: Math.random() * Math.PI,
+        baseScale: 0.08 + Math.random() * 0.12,
+        distance: r, // Distance from center for growth ripple timing
+        hueShift: Math.random(), // For color variety
+      });
+    }
+    return data;
+  }, [count]);
+
+  // Flower material with emissive glow
+  const flowerMaterial = useMemo(() => {
+    return new THREE.MeshStandardMaterial({
+      color: new THREE.Color().setHSL(0.92, 0.7, 0.65), // Soft pink
+      emissive: new THREE.Color().setHSL(0.92, 0.9, 0.4), // Warm pink glow
+      emissiveIntensity: 0,
+      roughness: 0.3,
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide,
+    });
+  }, []);
+
+  useFrame(() => {
+    if (!meshRef.current || growthProgress <= 0) return;
+    const dummy = dummyRef.current;
+
+    flowerData.forEach((flower, i) => {
+      // Ripple: flowers near center (Aksa) bloom first
+      const delay = flower.distance * 0.45;
+      const localGrowth = Math.max(0, Math.min(1,
+        (growthProgress - delay) / Math.max(0.01, 1 - delay)
+      ));
+
+      dummy.position.set(flower.x, flower.y, flower.z);
+      dummy.rotation.set(0, flower.rotY, 0);
+      // Bloom from ground: scale Y faster than XZ for sprouting effect
+      const s = flower.baseScale * localGrowth;
+      const eased = localGrowth * localGrowth * (3 - 2 * localGrowth); // smoothstep
+      dummy.scale.set(s, s * (1.5 + eased), s);
+      dummy.updateMatrix();
+      meshRef.current.setMatrixAt(i, dummy.matrix);
+    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
+
+    // Animate material emissive and opacity
+    flowerMaterial.emissiveIntensity = THREE.MathUtils.lerp(
+      flowerMaterial.emissiveIntensity, growthProgress * 1.8, 0.05
+    );
+    flowerMaterial.opacity = THREE.MathUtils.lerp(
+      flowerMaterial.opacity, opacity * Math.min(growthProgress * 2, 1), 0.05
+    );
+  });
+
+  return (
+    <instancedMesh ref={meshRef} args={[null, null, count]} position={[0, -0.75, 0]}>
+      <dodecahedronGeometry args={[0.05, 0]} />
+      <primitive object={flowerMaterial} attach="material" />
+    </instancedMesh>
+  );
+}
+
+function FloatingIsland({ opacity = 1, currentPart, growthProgress = 0 }) {
   const meshRef = useRef();
   const grassRef = useRef();
   const rockRef = useRef();
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
 
-  const material = new THREE.ShaderMaterial({
+  // ✅ useMemo prevents re-creating ShaderMaterial every render (was a GPU memory leak)
+  const material = useMemo(() => new THREE.ShaderMaterial({
     vertexShader,
     fragmentShader,
     uniforms: {
@@ -499,7 +631,7 @@ function FloatingIsland({ opacity = 1, currentPart }) {
     side: THREE.DoubleSide,
     transparent: true,
     opacity: opacity,
-  });
+  }), []);
 
   // Responsive geometry settings
   const { segments, grassCount, rockCount } = useMemo(() => {
@@ -520,21 +652,28 @@ function FloatingIsland({ opacity = 1, currentPart }) {
 
     mat.onBeforeCompile = (shader) => {
       shader.uniforms.time = { value: 0 };
+      shader.uniforms.uGrowth = { value: 0 }; // Growth: 0 = hidden, 1 = full height
       mat.userData.shader = shader;
 
       shader.vertexShader =
         "uniform float time;\n" +
+        "uniform float uGrowth;\n" +
         "varying float vHeight;\n" +
         shader.vertexShader;
 
       shader.vertexShader = shader.vertexShader.replace(
         "#include <begin_vertex>",
         "#include <begin_vertex>\n" +
+        "// Growth animation: grass sprouts from ground\n" +
+        "float growth = uGrowth;\n" +
+        "transformed.y *= growth;\n" +
+        "transformed.x *= mix(0.3, 1.0, growth);\n" +
+        "transformed.z *= mix(0.3, 1.0, growth);\n" +
         "float grassHeight = position.y + 0.15;\n" +
         "float normalizedHeight = grassHeight / 0.3;\n" +
         "vHeight = normalizedHeight;\n" +
         "float windSpeed = 1.2;\n" +
-        "float windAmp = 0.1;\n" +
+        "float windAmp = 0.1 * growth;\n" +
         "float wave = sin(time * windSpeed + (instanceMatrix[3][0] * 0.5) + (instanceMatrix[3][2] * 0.5));\n" +
         "float bend = normalizedHeight * normalizedHeight;\n" +
         "transformed.x += wave * windAmp * bend;\n" +
@@ -623,6 +762,11 @@ function FloatingIsland({ opacity = 1, currentPart }) {
   useFrame(({ clock }) => {
     if (grassMaterial.userData.shader) {
       grassMaterial.userData.shader.uniforms.time.value = clock.elapsedTime;
+      // Animate grass growth toward target
+      const currentGrowth = grassMaterial.userData.shader.uniforms.uGrowth.value;
+      grassMaterial.userData.shader.uniforms.uGrowth.value = THREE.MathUtils.lerp(
+        currentGrowth, growthProgress, 0.03
+      );
     }
   });
 
@@ -634,13 +778,19 @@ function FloatingIsland({ opacity = 1, currentPart }) {
     }
   }, [opacity, material]);
 
+  // ✅ useMemo prevents re-creating geometry every render
+  const islandGeometry = useMemo(
+    () => new THREE.CylinderGeometry(2.0, 1.0, 2.0, segments, 64, false),
+    [segments]
+  );
+
   return (
     <group position={[0, -1.0, -0.8]} visible={opacity > 0}>
       {/* Main Island */}
       <mesh
         ref={meshRef}
         name="IslandMesh"
-        geometry={new THREE.CylinderGeometry(2.0, 1.0, 2.0, segments, 64, false)}
+        geometry={islandGeometry}
         material={material}
         castShadow
         receiveShadow
@@ -658,26 +808,58 @@ function FloatingIsland({ opacity = 1, currentPart }) {
         <dodecahedronGeometry args={[0.5, 0]} />
         <meshStandardMaterial color="#3d342b" roughness={0.9} transparent opacity={opacity} />
       </instancedMesh>
+
+      {/* Flowers — bloom from Aksa's feet outward */}
+      <FlowerInstances growthProgress={growthProgress} opacity={opacity} />
     </group>
   );
 }
-function ComicScene({ scrollY, botReady }) {
+function ComicScene({ scrollY, botReady, activeFloorId }) {
   const islandRef = useRef();
   const group = useRef();
   const sparklesRef = useRef();
   const botMaterialsRef = useRef([]);
+  const mouseRef = useRef(new THREE.Vector2(0, 0));
   const { scene, animations } = useGLTF("/models/bot.glb");
   const { actions } = useAnimations(animations, group);
   const { camera, scene: threeScene, clock } = useThree();
   const [currentPart, setCurrentPart] = useState(0);
   const [sparklesIntensity, setSparklesIntensity] = useState(1.2);
 
+  // ✅ Cached objects for useFrame — prevents per-frame GC pressure
+  const lookAtVec = useRef(new THREE.Vector3());
+  const moodColorCache = useRef(new THREE.Color());
+  const lightPosA = useRef(new THREE.Vector3(0, 5, -10));
+  const lightPosB = useRef(new THREE.Vector3());
+  const cachedIslandMesh = useRef(null);
+  const cachedGrassMesh = useRef(null);
+  const cachedRockMesh = useRef(null);
+  const cachedAmbientLight = useRef(null);
+  const cachedSpotLight = useRef(null);
+  
+  // Custom clipping plane to realistically "sink" the bot into the ground
+  const clipPlaneRef = useRef(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0.75));
+
+  // Pre-computed mood lighting colors — emotionally matched to each narrative beat
+  const moodColors = useMemo(() => ({
+    1: new THREE.Color("#8899bb"),  // AWAKENING — cold blue dawn
+    2: new THREE.Color("#ffe8c0"),  // AKSA — warm golden confidence
+    3: new THREE.Color("#c8a868"),  // TIME — amber sand, fading
+    4: new THREE.Color("#665580"),  // STUCK — suffocated purple
+    5: new THREE.Color("#d0ddff"),  // TEST — electric white-blue
+    6: new THREE.Color("#7799bb"),  // REALIZE — cold clarity
+    7: new THREE.Color("#e8c8a0"),  // REFLECTION — amber memory
+    8: new THREE.Color("#ffcc88"),  // JOURNEY — warm ember rekindling
+    9: new THREE.Color("#ffe8bb"),  // HOPE — full golden warmth
+    default: new THREE.Color("#aaaaaa"),
+  }), []);
+
   // Use API instead of setSpring directly
   const [spring, api] = useSpring(() => ({
-    positionX: 0, // Di tengah
-    positionY: 0.2, // Di atas permukaan island agar terlihat
-    positionZ: 0.8, // Lebih maju ke depan (dekat tepi depan island)
-    rotationX: -Math.PI / 2, // Berbaring
+    positionX: 0,
+    positionY: 0.2,
+    positionZ: 0.8,
+    rotationX: -Math.PI / 2,
     rotationY: 0,
     rotationZ: 0,
     scale: 1,
@@ -686,16 +868,17 @@ function ComicScene({ scrollY, botReady }) {
     config: { mass: 1, tension: 170, friction: 26 },
   }));
 
+  // Cinematic camera — each position tells a visual story
   const cameraPositions = [
-    { position: [0, 3.5, 6], target: [0, 0.5, -0.8] },
-    { position: [-1, 2.5, 7], target: [-0.5, 0.8, 0] },
-    { position: [2, 2.8, 5], target: [0.5, 0.5, 0] },
-    { position: [0, 2.5, 4], target: [0, 0.5, 0] },
-    { position: [0, 3, 6], target: [0, 0, 0] },
-    { position: [0, 2.5, 5.5], target: [0, -0.5, 0] },
-    { position: [0, 1.5, 7], target: [0, 1, 0] },
-    { position: [-2, 2.5, 6], target: [0, 1, 0] },
-    { position: [0, 2.5, 9], target: [0, 1, 0] },
+    { position: [0, 4.0, 8],    target: [0, 0.5, -0.8] },   // AWAKENING — wide establishing, distant
+    { position: [-0.8, 2.2, 5], target: [-0.3, 0.6, 0] },   // AKSA — intimate side angle, close
+    { position: [1.5, 4.5, 4.5],  target: [0, 0.0, 0] },    // TIME — High angle, watching him begin to sink
+    { position: [0, 6.5, 1.2],  target: [0, -1.0, 0] },     // STUCK — Extreme high angle (top-down), swallowing him
+    { position: [0, 3.5, 7],    target: [0, 0, -0.5] },     // TEST — dramatic high angle
+    { position: [0, 1.0, 5],    target: [0, 0.8, 0] },      // REALIZE — low angle looking up (vulnerability)
+    { position: [0, 0.8, 4.5],  target: [0, 0.5, 0] },      // REFLECTION — near eye-level (mirror)
+    { position: [-1.5, 2.8, 6], target: [0.5, 0.8, 0] },    // JOURNEY — tracking side shot
+    { position: [0, 3.0, 10],   target: [0, 1.0, 0] },      // HOPE — ascending pull-out, expansive
   ];
 
   useEffect(() => {
@@ -712,11 +895,20 @@ function ComicScene({ scrollY, botReady }) {
       if (child.isMesh) {
         child.material.transparent = true;
         child.material.depthWrite = true;
+        child.material.clippingPlanes = [clipPlaneRef.current];
         child.material.needsUpdate = true;
         child.renderOrder = 1;
         botMaterialsRef.current.push(child.material);
       }
     });
+
+    // Mouse tracking for Evil Eye (floor 7 REFLECTION)
+    const handleMouseMove = (e) => {
+      mouseRef.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseRef.current.y = -((e.clientY / window.innerHeight) * 2 - 1);
+    };
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
   useEffect(() => {
@@ -771,30 +963,34 @@ function ComicScene({ scrollY, botReady }) {
         });
         break;
       case 2: // TIME
-        const sinkProgress = Math.pow(partProgress, 2);
+        const sinkProgress = Math.pow(partProgress, 1.5);
         api.start({
           positionX: 0,
-          positionY: THREE.MathUtils.lerp(floatY, -4.0, sinkProgress),
+          // Sink into the island slowly, up to his waist
+          positionY: THREE.MathUtils.lerp(floatY, floatY - 0.8, sinkProgress),
           positionZ: 0,
-          rotationY: 0, // Tidak ada gerakan rotasi
-          rotationX: 0,
+          rotationY: 0,
+          // Lean forward slightly as if losing energy
+          rotationX: THREE.MathUtils.lerp(0, 0.3, sinkProgress), 
           rotationZ: 0,
-          scale: THREE.MathUtils.lerp(1, 0.9, partProgress),
-          opacity: 1,
+          scale: THREE.MathUtils.lerp(1, 0.85, partProgress),
+          opacity: THREE.MathUtils.lerp(1, 0.8, partProgress),
           islandOpacity: 1,
           config: { mass: 1, tension: 120, friction: 14 },
         });
         break;
       case 3: // STUCK
+        // Sink completely into the island, fade out, shrink
         api.start({
           positionX: 0,
-          positionY: THREE.MathUtils.lerp(-4.0, -5.5, partProgress),
+          // Sink deeper, but stop at -1.5 so he never pokes out the bottom of the island
+          positionY: THREE.MathUtils.lerp(floatY - 0.8, floatY - 1.5, partProgress),
           positionZ: 0,
-          rotationY: 0, // Tidak ada gerakan rotasi
-          rotationX: 0,
+          rotationY: THREE.MathUtils.lerp(0, 0.5, partProgress), // Struggle/twist slightly
+          rotationX: THREE.MathUtils.lerp(0.3, 0.8, partProgress), // Collapse forward
           rotationZ: 0,
-          scale: 0.9,
-          opacity: THREE.MathUtils.lerp(1, 0, partProgress),
+          scale: THREE.MathUtils.lerp(0.85, 0.4, partProgress), // Shrink as he's swallowed
+          opacity: THREE.MathUtils.lerp(0.8, 0, Math.pow(partProgress, 2)), // Fade to 0 at the end
           islandOpacity: 1,
           config: { mass: 1, tension: 120, friction: 14 },
         });
@@ -802,7 +998,7 @@ function ComicScene({ scrollY, botReady }) {
       case 4: // TEST
         api.start({
           positionX: 0,
-          positionY: -6.5,
+          positionY: floatY - 1.5, // keep him hidden inside the island
           positionZ: 0,
           rotationX: 0,
           rotationY: 0,
@@ -815,7 +1011,7 @@ function ComicScene({ scrollY, botReady }) {
       case 5: // REALIZE
         api.start({
           positionX: 0,
-          positionY: THREE.MathUtils.lerp(-3.5, floatY, partProgress),
+          positionY: THREE.MathUtils.lerp(floatY - 1.5, floatY, partProgress),
           positionZ: 0,
           rotationY: 0,
           rotationX: 0,
@@ -842,82 +1038,136 @@ function ComicScene({ scrollY, botReady }) {
   }, [scrollY, api]);
 
   useFrame((state, delta) => {
+    // ✅ Lazy-cache scene object references (replaces costly traverse() every frame)
+    if (!cachedIslandMesh.current) cachedIslandMesh.current = threeScene.getObjectByName("IslandMesh");
+    if (!cachedGrassMesh.current) cachedGrassMesh.current = threeScene.getObjectByName("GrassMesh");
+    if (!cachedRockMesh.current) cachedRockMesh.current = threeScene.getObjectByName("RockMesh");
+    if (!cachedAmbientLight.current) cachedAmbientLight.current = threeScene.children.find(c => c.isAmbientLight);
+    if (!cachedSpotLight.current) cachedSpotLight.current = threeScene.getObjectByName("MainSpot");
+
     // Island floating sync
     const islandFloatY = Math.sin(state.clock.elapsedTime * 0.6) * 0.05;
     const islandBaseY = -0.75;
     
-    // Update island components in world space
-    threeScene.traverse((child) => {
-      if (child.name === "IslandMesh" || child.name === "GrassMesh" || child.name === "RockMesh") {
-        child.position.y = islandBaseY + islandFloatY;
-      }
+    // ✅ Update cached refs directly (was: threeScene.traverse() every frame)
+    [cachedIslandMesh, cachedGrassMesh, cachedRockMesh].forEach(ref => {
+      if (ref.current) ref.current.position.y = islandBaseY + islandFloatY;
     });
+
+    // Sync clipping plane with the island's floating top surface
+    const SURFACE_WORLD_Y = -1.0 + islandBaseY + 1.0 + islandFloatY;
+    clipPlaneRef.current.constant = -(SURFACE_WORLD_Y - 0.06); // Give a small margin so feet don't clip when walking
 
     const partCount = 9;
     const rawPart = Math.floor(scrollY * partCount);
     const newPart = Math.min(rawPart, partCount - 1);
     if (newPart !== currentPart) setCurrentPart(newPart);
 
-    // Island glitch sync
-    threeScene.traverse((child) => {
-      if (child.name === "IslandMesh" && child.material.uniforms?.uGlitch) {
-        let glitchTarget = (newPart === 2 || newPart === 3) ? 0.05 + Math.random() * 0.05 : 0;
-        child.material.uniforms.uGlitch.value = THREE.MathUtils.lerp(child.material.uniforms.uGlitch.value, glitchTarget, 0.1);
-        child.material.uniforms.time.value = state.clock.elapsedTime;
-      }
-    });
+    // Island glitch sync (using cached ref)
+    if (cachedIslandMesh.current?.material?.uniforms?.uGlitch) {
+      const mat = cachedIslandMesh.current.material;
+      const glitchTarget = (newPart === 2 || newPart === 3) ? 0.05 + Math.random() * 0.05 : 0;
+      mat.uniforms.uGlitch.value = THREE.MathUtils.lerp(mat.uniforms.uGlitch.value, glitchTarget, 0.1);
+      mat.uniforms.time.value = state.clock.elapsedTime;
+    }
 
     const targetPos = cameraPositions[newPart] || cameraPositions[0];
     
-    // Faster camera response to scroll
-    const lerpFactor = delta * 3.0; 
-    camera.position.lerp(new THREE.Vector3(...targetPos.position), lerpFactor);
-    
-    // Smoothly interpolate camera target as well
-    const currentTarget = new THREE.Vector3();
-    camera.getWorldDirection(currentTarget);
-    const targetVec = new THREE.Vector3(...targetPos.target);
-    camera.lookAt(targetVec);
+    // Cinematographic camera using damp() — organic acceleration/deceleration
+    const camLambda = 4;
+    camera.position.x = THREE.MathUtils.damp(camera.position.x, targetPos.position[0], camLambda, delta);
+    camera.position.y = THREE.MathUtils.damp(camera.position.y, targetPos.position[1], camLambda, delta);
+    camera.position.z = THREE.MathUtils.damp(camera.position.z, targetPos.position[2], camLambda, delta);
+    // ✅ Reuse cached Vector3 (was: new THREE.Vector3() every frame)
+    lookAtVec.current.set(...targetPos.target);
+    camera.lookAt(lookAtVec.current);
 
-    // Subtle bot rotation based on story progress to feel "alive"
-    if (group.current) {
-      group.current.rotation.y = THREE.MathUtils.lerp(
-        group.current.rotation.y,
-        Math.sin(scrollY * Math.PI * 2) * 0.1,
-        0.1
-      );
+    // Per-mood ambient lighting sync via activeFloorId
+    const ambientLight = cachedAmbientLight.current;
+    if (ambientLight) {
+      // Ambient intensity follows emotional arc: dark → bright → dark → bright
+      const moodIntensity = { 1: 0.06, 2: 0.22, 3: 0.12, 4: 0.03, 5: 0.15, 6: 0.05, 7: 0.12, 8: 0.18, 9: 0.28 };
+      const targetIntensity = moodIntensity[activeFloorId] || 0.10;
+      ambientLight.intensity = THREE.MathUtils.damp(ambientLight.intensity, targetIntensity, 3, delta);
+      const targetMoodColor = moodColors[activeFloorId] || moodColors.default;
+      ambientLight.color.lerp(targetMoodColor, delta * 2);
     }
 
+    // Per-mood spot light intensity (using cached ref)
+    const light = cachedSpotLight.current;
+    if (light) {
+      // Spot follows same arc — low for despair scenes, high for revelation
+      const spotMoodIntensity = { 1: 1.5, 2: 4.0, 3: 2.0, 4: 0.6, 5: 5.0, 6: 1.2, 7: 2.5, 8: 3.5, 9: 5.0 };
+      const targetInt = spotMoodIntensity[activeFloorId] || 2.5;
+      light.intensity = THREE.MathUtils.damp(light.intensity, targetInt, 3, delta);
+
+      if (currentPart === 0) {
+        lightPosA.current.set(0, 5, -10);
+        light.position.lerp(lightPosA.current, delta * 0.5);
+      } else {
+        lightPosB.current.copy(camera.position).add(lightPosA.current.set(3, 5, 5));
+        light.position.lerp(lightPosB.current, delta * 0.5);
+      }
+    }
+
+    // Bot animation time sync
     if (actions["Armature|mixamo.com|Layer0"]) {
       const partProgress = (scrollY * partCount) % 1;
       actions["Armature|mixamo.com|Layer0"].time =
         actions["Armature|mixamo.com|Layer0"].getClip().duration * partProgress;
     }
 
+    // Bot opacity + emissive "nyala tekad" sync
     const currentOpacity = spring.opacity.get();
+    // Emissive intensity — follows the "nyala" metaphor (inner fire)
+    const emissiveMap = { 0: 0, 1: 2.0, 2: 0.5, 3: 0.1, 4: 0, 5: 0.3, 6: 0.8, 7: 1.8, 8: 3.0 };
+    const targetEmissive = emissiveMap[currentPart] ?? 0;
+    // Emissive color — matched to particle/ray palette for coherence
+    const emissiveColorMap = {
+      0: 0x000000, 1: 0xffcc44, 2: 0xaa8844, 3: 0x443366,
+      4: 0x000000, 5: 0x5588bb, 6: 0xff8844, 7: 0xff6622, 8: 0xffdd66
+    };
+
     botMaterialsRef.current.forEach((mat) => {
       mat.opacity = currentOpacity;
+      // Initialize emissive on first pass
+      if (!mat._emissiveInit) {
+        mat.emissive = new THREE.Color(0xffaa22);
+        mat.emissiveIntensity = 0;
+        mat._emissiveInit = true;
+      }
+      // Lerp emissive intensity for smooth "awakening" glow
+      mat.emissiveIntensity = THREE.MathUtils.lerp(
+        mat.emissiveIntensity, targetEmissive, 0.03
+      );
+      // Lerp emissive color toward mood target
+      const targetEColor = emissiveColorMap[currentPart] ?? 0x000000;
+      mat.emissive.lerp(new THREE.Color(targetEColor), 0.02);
     });
 
+    // Sparkles position for Realize (part 5)
     if (currentPart === 5 && sparklesRef.current) {
       sparklesRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.2;
     }
 
-    const light = threeScene.getObjectByName("MainSpot");
-    if (light) {
-      // Move light to back for Awakening (part 0), then front for others
-      const targetLightPos = currentPart === 0
-        ? new THREE.Vector3(0, 5, -10) // Backlight for Awakening
-        : camera.position.clone().add(new THREE.Vector3(3, 5, 5)); // Front light for others
-
-      light.position.lerp(targetLightPos, delta * 0.5);
+    // Subtle bot breathing rotation
+    if (group.current) {
+      group.current.rotation.y = THREE.MathUtils.damp(
+        group.current.rotation.y,
+        Math.sin(state.clock.elapsedTime * 0.3) * 0.08,
+        3,
+        delta
+      );
     }
   });
 
   return (
     <>
+      {/* Per-floor fullscreen shader backgrounds */}
+      <StoryBackgrounds activeFloorId={activeFloorId} islandOpacity={spring.islandOpacity.get()} mouseRef={mouseRef} />
+
       <ContactShadows
-        position={[0, -0.74, 0]} // Just above island surface
+        position={[0, -0.74, 0]}
         opacity={0.6}
         scale={6}
         blur={2.5}
@@ -925,7 +1175,16 @@ function ComicScene({ scrollY, botReady }) {
         color="#000000"
       />
 
-      <FloatingIsland opacity={spring.islandOpacity.get()} currentPart={currentPart} />
+      <FloatingIsland
+        opacity={spring.islandOpacity.get()}
+        currentPart={currentPart}
+        growthProgress={
+          // Growth: 0 during AWAKENING, ramps to 1 during AKSA, stays 1 after
+          currentPart === 0 ? 0
+          : currentPart === 1 ? Math.min(1, (scrollY * 9 - 1) / 0.8) // Ramp during AKSA
+          : 1
+        }
+      />
       <StoryGodRays currentPart={currentPart} opacity={spring.islandOpacity.get()} />
       <StoryParticles currentPart={currentPart} opacity={spring.islandOpacity.get()} />
       
@@ -966,9 +1225,80 @@ function ComicScene({ scrollY, botReady }) {
   );
 }
 
-export default function ThreeCanvas({ scrollY, botReady }) {
+// ─── Bloom Controller (Native Three.js EffectComposer) ─────────────
+// Manages UnrealBloomPass with per-floor intensity for "nyala tekad" aura.
+function NativeBloomEffect({ scrollY }) {
+  const { gl, scene, camera, size } = useThree();
+  const composerRef = useRef(null);
+  const bloomPassRef = useRef(null);
+  const currentIntensity = useRef(0);
+
+  // Bloom intensity per floor — harmonized with lighting/particle/ray arc
+  const bloomMap = useMemo(() => ({
+    0: 0.1,    // AWAKENING — near darkness, faint dawn haze
+    1: 1.4,    // AKSA — golden "nyala tekad" full bloom
+    2: 0.4,    // TIME — amber afterglow fading
+    3: 0.05,   // STUCK — near-zero, suffocated
+    4: 1.0,    // TEST — sharp lightning flash
+    5: 0.15,   // REALIZE — dim moment of cold clarity
+    6: 0.7,    // REFLECTION — warm introspective glow
+    7: 1.0,    // JOURNEY — rekindling embers
+    8: 1.8,    // HOPE — brightest bloom, catharsis
+  }), []);
+
+  // Initialize EffectComposer once
+  useEffect(() => {
+    const composer = new ThreeEffectComposer(gl);
+    composer.addPass(new RenderPass(scene, camera));
+
+    const bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(size.width, size.height),
+      0,     // initial strength
+      0.4,   // radius
+      0.25   // luminance threshold
+    );
+    composer.addPass(bloomPass);
+    composer.addPass(new OutputPass());
+
+    composerRef.current = composer;
+    bloomPassRef.current = bloomPass;
+
+    return () => {
+      composer.dispose();
+    };
+  }, [gl, scene, camera]);
+
+  // Resize composer when viewport changes
+  useEffect(() => {
+    if (composerRef.current) {
+      composerRef.current.setSize(size.width, size.height);
+    }
+  }, [size]);
+
+  // Render loop: animate bloom + render through composer
+  useFrame(() => {
+    const partCount = 9;
+    const currentPart = Math.min(Math.floor(scrollY * partCount), partCount - 1);
+    const target = bloomMap[currentPart] ?? 0;
+
+    currentIntensity.current = THREE.MathUtils.lerp(
+      currentIntensity.current, target, 0.04
+    );
+
+    if (bloomPassRef.current) {
+      bloomPassRef.current.strength = currentIntensity.current;
+    }
+    if (composerRef.current) {
+      composerRef.current.render();
+    }
+  }, 1); // Priority 1: render AFTER scene updates
+
+  return null; // This component renders via useFrame, no JSX output
+}
+
+export default function ThreeCanvas({ scrollY, botReady, activeFloorId }) {
   const isMobile = useIsMobile();
-  const fov = isMobile ? 55 : 45; // Wider FOV on mobile
+  const fov = isMobile ? 55 : 45;
 
   return (
     <div className={styles.threeCanvasWrapper}>
@@ -978,6 +1308,9 @@ export default function ThreeCanvas({ scrollY, botReady }) {
           powerPreference: "high-performance",
           antialias: true,
           alpha: true,
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 1.0,
+          localClippingEnabled: true,
         }}
         dpr={[1, 2]}
       >
@@ -985,9 +1318,9 @@ export default function ThreeCanvas({ scrollY, botReady }) {
         <ambientLight intensity={0.15} color="#ffffff" />
         <spotLight
           name="MainSpot"
-          position={[0, 5, -10]} // Initial position at back
+          position={[0, 5, -10]}
           angle={0.5}
-          intensity={3} // Increased intensity for backlight
+          intensity={3}
           penumbra={0.5}
           castShadow
           shadow-mapSize={[2048, 2048]}
@@ -996,8 +1329,11 @@ export default function ThreeCanvas({ scrollY, botReady }) {
 
         <Environment preset="studio" />
         <Suspense fallback={null}>
-          <ComicScene scrollY={scrollY} botReady={botReady} />
+          <ComicScene scrollY={scrollY} botReady={botReady} activeFloorId={activeFloorId} />
         </Suspense>
+
+        {/* Post-Processing: Native Bloom for "nyala tekad" aura */}
+        <NativeBloomEffect scrollY={scrollY} />
       </Canvas>
     </div>
   );

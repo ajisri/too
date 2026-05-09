@@ -1,35 +1,87 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   GLOBALS.CSS — Root Design System for "Bayangan yang Ia Tinggalkan"
+   
+   Establishes the foundational typographic and color system
+   that cascades into all components.
+   ═══════════════════════════════════════════════════════════════════════ */
+
 /* postcss-ignore */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Google Fonts (backup import for fonts not loaded via next/font) ── */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Bebas+Neue&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Bebas+Neue&display=swap");
 
+/* ─── Custom Font Face ───────────────────────────────────────────────── */
 @font-face {
   font-family: "Main";
   src: url("../../public/medias/PPPangaia-Medium.ttf");
   font-display: swap;
 }
 
+/* ─── Root Custom Properties ─────────────────────────────────────────── */
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  
+  /* Narrative Font Stack — cascaded from next/font variables */
+  --font-narrative: var(--font-jp), "Noto Serif JP", "Georgia", "Times New Roman", serif;
+  --font-display: var(--font-playfair), "Playfair Display", "Georgia", serif;
+  --font-accent: "Bebas Neue", "Impact", sans-serif;
+  
+  /* Narrative Typography Tokens */
+  --narrative-font: var(--font-narrative);
+  --narrative-display: var(--font-display);
+  --narrative-accent: var(--font-accent);
+  
+  /* Narrative Color Palette */
+  --text-primary: #f0ebe3;
+  --text-secondary: #c8bfb0;
+  --text-emphasis: #e8d5b5;
+  --text-strong: #f5ecd8;
+  --text-dim: #8a8278;
+  
+  /* Spacing Rhythm — based on 8px grid, musical intervals */
+  --rhythm-xs: 0.5rem;
+  --rhythm-sm: 1rem;
+  --rhythm-md: 1.5rem;
+  --rhythm-lg: 2.5rem;
+  --rhythm-xl: 4rem;
 }
 
+/* ─── Base Body ──────────────────────────────────────────────────────── */
 body {
   margin: 0px;
-  background-color: white;
+  background-color: black;
   color: rgb(var(--foreground-rgb));
-  font-family: "Main", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  font-family: var(--font-narrative);
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  /* Smooth scrolling behavior */
+  scroll-behavior: smooth;
+  
+  /* Prevent text size adjustment on mobile rotation */
+  -webkit-text-size-adjust: 100%;
 }
 
-/* GSAP-style header tag */
+/* ─── Selection Styling — Matches Narrative Warmth ───────────────────── */
+::selection {
+  background: rgba(232, 213, 181, 0.25);
+  color: #f0ebe3;
+}
+
+::-moz-selection {
+  background: rgba(232, 213, 181, 0.25);
+  color: #f0ebe3;
+}
+
+/* ─── GSAP-style header tag ──────────────────────────────────────────── */
 .header-tag {
   font-family: "Inter", sans-serif;
   font-size: 18px;
@@ -50,8 +102,9 @@ body {
   color: #888;
 }
 
+/* ─── Display Font Classes ───────────────────────────────────────────── */
 .font-title {
-  font-family: "Playfair Display", serif;
+  font-family: var(--font-display);
   font-weight: 700;
   font-size: 82px;
   line-height: 1.1;
@@ -59,25 +112,26 @@ body {
 }
 
 .font-floor {
-  font-family: "Bebas Neue", sans-serif;
+  font-family: var(--font-accent);
   font-weight: 400;
   font-size: 36px;
   letter-spacing: 0.02em;
 }
 
+/* ─── Tailwind Utilities ─────────────────────────────────────────────── */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
 }
 
-/* Fix for the border-border issue */
+/* ─── Base Layer Resets ──────────────────────────────────────────────── */
 @layer base {
   * {
     border-color: hsl(var(--border, 0 0% 89.8%));
   }
   body {
-    background-color: hsl(var(--background, 0 0% 100%));
-    color: hsl(var(--foreground, 0 0% 3.9%));
+    background-color: hsl(var(--background, 0 0% 0%));
+    color: hsl(var(--foreground, 0 0% 96%));
   }
 }
