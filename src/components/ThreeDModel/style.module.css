@@ -526,10 +526,6 @@
 
 /* ─── Left/Right Panel Modifiers ─────────────────────────────────────── */
 
-.leftPanel {
-  /* Left-aligned panels get a left border accent */
-}
-
 .leftPanel::after {
   content: "";
   position: absolute;
@@ -546,10 +542,6 @@
     transparent 100%
   );
   border-radius: 1px;
-}
-
-.rightPanel {
-  /* Right-aligned panels get a right border accent */
 }
 
 .rightPanel::after {
@@ -569,6 +561,7 @@
   );
   border-radius: 1px;
 }
+
 
 /* ─── 3D Bot/Skyland ─────────────────────────────────────────────────── */
 
